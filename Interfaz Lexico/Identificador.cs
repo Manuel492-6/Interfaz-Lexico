@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Interfaz_Lexico
 {
-    internal class Identificador
+    internal class Identificador: IEquatable<Identificador>, IComparable<Identificador>
     {
 		private int _NumeroDeIdentificador;
 
@@ -41,7 +41,17 @@ namespace Interfaz_Lexico
 		}
 
 
+		public bool Equals(Identificador other)
+		{
+			return this.Nombre.Equals(other.Nombre);
+        }
+
+		public int CompareTo(Identificador other)
+		{
+			return this.NumeroDeIdentificador.CompareTo(other.NumeroDeIdentificador);
+        }
 
 
-	}
+
+    }
 }

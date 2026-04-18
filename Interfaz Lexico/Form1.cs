@@ -7,7 +7,8 @@ namespace Interfaz_Lexico
 {
     public partial class Form1 : Form
     {
-
+        List<Identificador> ListaDeIdentificadores = new List<Identificador>();
+        ClaseListaSimpleOrdenada<Identificador> ListaDeIdentificadoresOrdenada = new ClaseListaSimpleOrdenada<Identificador>();
         private string ConexionBD = @"Server=DESKTOP-3G6AMVL\SQLEXPRESS; Database=NovaNyx; Integrated Security=True; TrustServerCertificate=True;";
         private string[,] matrizCompleta;
         private List<string> alfabetoTemporal = new List<string>();
@@ -87,10 +88,11 @@ namespace Interfaz_Lexico
                 int EstadoActual = 1;
                 int SiguienteEstado = 1;
                 int columna = 0;
-
+                int contadorChar = 0;
                 
                 foreach (char simbolo in palabras[j])
                 {
+                    contadorChar++;
 
                     columna = alfabetoTemporal.IndexOf(simbolo.ToString());
                     
@@ -125,11 +127,36 @@ namespace Interfaz_Lexico
                     {
                         //Error porque no se acepta el token
                         Debug.WriteLine($"Simbolo: EOC | Estado Actual: {EstadoActual} | Columna: {columna + 1} | Siguiente Estado: {SiguienteEstado}");
+                        Debug.WriteLine(matrizCompleta[EstadoActual,matrizCompleta.GetLength(1)-1].ToString())
 ;
                         continue;
                     }
                     else
                     {
+
+                        if (contadorChar == palabras[j].Length)
+                        {
+                            Debug.WriteLine("Misma longitud");                        
+                            Identificador nuevoIdentificador = new Identificador();
+                            nuevoIdentificador.NumeroDeIdentificador = j;
+                            nuevoIdentificador.Nombre = palabras[j];
+                            nuevoIdentificador.Valor = "Null";
+                            nuevoIdentificador.TipoDeDato = "Null";
+                            if (ListaDeIdentificadoresOrdenada.Vacia == true)
+                            {
+                                ListaDeIdentificadoresOrdenada.Insertar(nuevoIdentificador);
+                            }
+
+                            if (ListaDeIdentificadoresOrdenada.Buscar(nuevoIdentificador) == false)
+                            {
+                                ListaDeIdentificadoresOrdenada.Insertar(nuevoIdentificador);
+                            }
+                            else
+                            {
+                                Debug.WriteLine($"El identificador '{palabras[j]}' ya existe en la tabla de símbolos.");
+                            }
+                        }
+
                         //Token aceptado
                         NuevoToken += matrizCompleta[SiguienteEstado, matrizCompleta.GetLength(1) - 1] + " ";
                     }
@@ -138,6 +165,12 @@ namespace Interfaz_Lexico
                 }
                 Debug.WriteLine("---------------------------------------");
 
+            }
+
+            dgtTablaDeSimbolos.Rows.Clear();
+            foreach (var identificador in ListaDeIdentificadoresOrdenada)
+            {
+                dgtTablaDeSimbolos.Rows.Add(identificador.NumeroDeIdentificador, identificador.Nombre, identificador.TipoDeDato, identificador.Valor);
             }
 
             //Agrega el token de la linea a la lista de tokens, eliminando el espacio al final
@@ -300,6 +333,10 @@ namespace Interfaz_Lexico
             List<string> Tokens = new List<string>();
 
             Tokens.Clear();
+            if(ListaDeIdentificadoresOrdenada.Vacia == false)
+            {
+                ListaDeIdentificadoresOrdenada.Vaciar();
+            }
 
             //Recorre cada linea del programa fuente, separa las palabras por espacios y las agrega a la lista de tokens
             for (int i = 0; i < NumeroDeLineas; i++)
