@@ -1,4 +1,5 @@
 using System.Data;
+using System.Diagnostics;
 using System.Drawing.Drawing2D;
 using Microsoft.Data.SqlClient;
 
@@ -8,26 +9,22 @@ namespace Interfaz_Lexico
     {
 
         private string ConexionBD = @"Server=DESKTOP-3G6AMVL\SQLEXPRESS; Database=NovaNyx; Integrated Security=True; TrustServerCertificate=True;";
-        private Dictionary<string, string> mapaColumnas = new Dictionary<string, string>();
-        private List<string> alfabeto = new List<string>();
-        private int[,] matriz;
-        private Dictionary<int, string> categoriasEstado = new Dictionary<int, string>();
-        private int maxEstado = 0;
-       
+        private string[,] matrizCompleta;
+        private List<string> alfabetoTemporal = new List<string>();
+
         public Form1()
         {
             InitializeComponent();
+
         }
 
         private void Form1_Load(object sender, EventArgs e)
         {
             try
             {
-                // Se usan los metdos combinados para detectar la estructura y cargar los datos
+                // Se usan los métodos combinados para detectar la estructura y cargar los datos
                 CargarEstructuraYDatosDesdeSQL();
                 CargarMatrizEnGrid();
-                MessageBox.Show("Conexión exitosa y datos cargados correctamente.");
-                MessageBox.Show(matriz[1,2].ToString());
 
             }
             catch (Exception ex)
@@ -68,120 +65,199 @@ namespace Interfaz_Lexico
             //Recorre cada linea del programa fuente, separa las palabras por espacios y las agrega a la lista de tokens
             for (int i = 0; i < NumeroDeLineas; i++)
             {
-                //Almacena Cada token de cada linea
-                string NuevoToken = "";
-                //Separa las palabras de cada linea por espacios y las agrega a la lista de tokens
-                string[] palabras = richProgramaFuente.Lines[i].Split(" ", StringSplitOptions.RemoveEmptyEntries);
-
-                //Agrega cada palabra de la linea a la variable NuevoToken, separada por un espacio
-                for (int j = 0; j < palabras.Length; j++)
-                {
-                    if (palabras[j] == "START")
-                    {
-                        NuevoToken += "RW0";
-                        continue;
-                    }
-                    NuevoToken += palabras[j] + " ";
-                }
-
-                //Agrega el token de la linea a la lista de tokens, eliminando el espacio al final
-                Tokens.Add(NuevoToken.TrimEnd());
-
-
-                //Agrega los token al nuevo archivo de tokens
-                richArchivoDeTokens.Lines = Tokens.ToArray();
-
-                palabras = null;
+                VerificarToken(i, Tokens);
             }
 
 
         }
 
+        private void VerificarToken(int i, List<string> Tokens)
+        {
+            //Almacena Cada token de cada linea
+            string NuevoToken = "";
+            
+            //Separa las palabras de cada linea por espacios y las agrega a la lista de tokens
+            string[] palabras = richProgramaFuente.Lines[i].Split(" ", StringSplitOptions.RemoveEmptyEntries);
 
-        //Se combinan los pasos de detección de estructura y carga de datos en un solo método para mayor eficiencia y simplicidad
+            bool Error = false;
+
+            //Agrega cada palabra de la linea a la variable NuevoToken, separada por un espacio
+            for (int j = 0; j < palabras.Length; j++)
+            {
+                int EstadoActual = 1;
+                int SiguienteEstado = 1;
+                int columna = 0;
+
+                
+                foreach (char simbolo in palabras[j])
+                {
+
+                    columna = alfabetoTemporal.IndexOf(simbolo.ToString());
+                    
+                    
+                    if (columna == -1)
+                    {
+                        NuevoToken += "ErrorS" + " ";
+                        Debug.WriteLine($"Simbolo: {simbolo} no reconocido en el alfabeto.");
+                        continue;
+                    }
+
+                    SiguienteEstado = matrizCompleta[EstadoActual, columna + 1] == "Error" ? -1 : int.Parse(matrizCompleta[EstadoActual, columna + 1]);
+                    Debug.WriteLine($"Simbolo: {simbolo} | Estado Actual: {EstadoActual} | Columna: {columna + 1} | Siguiente Estado: {SiguienteEstado}");
+
+                    if (SiguienteEstado == -1)
+                    {
+                        //Error porque no se acepta el token
+                        MessageBox.Show(matrizCompleta[EstadoActual, matrizCompleta.GetLength(1) - 1]);
+                        Error = true;
+                        return;
+                    }
+                    EstadoActual = SiguienteEstado;
+                }
+
+                if (!Error)
+                {
+                    columna = alfabetoTemporal.IndexOf("EOC");
+
+                    SiguienteEstado = int.TryParse(matrizCompleta[EstadoActual, columna + 1], out int resultado) ? resultado : -1;
+                    
+                    if (SiguienteEstado == -1)
+                    {
+                        //Error porque no se acepta el token
+                        Debug.WriteLine($"Simbolo: EOC | Estado Actual: {EstadoActual} | Columna: {columna + 1} | Siguiente Estado: {SiguienteEstado}");
+;
+                        continue;
+                    }
+                    else
+                    {
+                        //Token aceptado
+                        NuevoToken += matrizCompleta[SiguienteEstado, matrizCompleta.GetLength(1) - 1] + " ";
+                    }
+
+                       
+                }
+                Debug.WriteLine("---------------------------------------");
+
+            }
+
+            //Agrega el token de la linea a la lista de tokens, eliminando el espacio al final
+            Tokens.Add(NuevoToken.TrimEnd());
+
+
+            //Agrega los token al nuevo archivo de tokens
+            richArchivoDeTokens.Lines = Tokens.ToArray();
+
+            palabras = null;
+        }
+
+
+
+
         private void CargarEstructuraYDatosDesdeSQL()
         {
             using (SqlConnection conn = new SqlConnection(ConexionBD))
             {
                 conn.Open();
 
-                // 1. Obtenemos todos los datos de la tabla MatrizTransicion para analizar su estructura y contenido
-                string query = "SELECT * FROM MatrizTransicion ORDER BY 1";
+                string query = "SELECT * FROM MatrizTransicion"; // Mejor ordenamiento seguro
                 SqlCommand cmd = new SqlCommand(query, conn);
 
                 SqlDataAdapter adapter = new SqlDataAdapter(cmd);
                 DataTable tablaDB = new DataTable();
                 adapter.Fill(tablaDB);
 
-                // Validación básica para asegurar que la tabla no esté vacía
                 if (tablaDB.Rows.Count == 0)
                     throw new Exception("La tabla MatrizTransicion está vacía.");
 
-                // 2. DETECCIÓN AUTOMÁTICA DEL ALFABETO
-                alfabeto.Clear();
+
+                // 1. RECOPILAR EL ALFABETO TEMPORALMENTE (Para saber de qué tamaño será la matriz)
+                //List<string> alfabetoTemporal = new List<string>();
+                Dictionary<string, string> mapaColumnas = new Dictionary<string, string>();
+
                 foreach (DataColumn col in tablaDB.Columns)
                 {
-                    // El nombre real de la columna en la base de datos en la iteración actual
                     string nombreReal = col.ColumnName;
-
-                    // Saltamos la columna ID (índice 0) y ACEPTA
                     if (nombreReal != tablaDB.Columns[0].ColumnName && nombreReal.ToUpper() != "ACEPTA")
                     {
-                        //Si es 'a1' y mide 2 caracteres, lo limpiamos a 'a'
+
                         string nombreLimpio = nombreReal;
                         if (nombreReal.Length == 2 && nombreReal.EndsWith("1"))
                         {
                             nombreLimpio = nombreReal.Substring(0, 1);
                         }
-
-                        alfabeto.Add(nombreLimpio);// Agregamos el símbolo limpio al alfabeto
-                        mapaColumnas[nombreLimpio] = nombreReal; // Guardamos la relación para cuando el usuario ejemplo ingrese 'a' y nosotros busquemos 'a1' en la tabla
+                        alfabetoTemporal.Add(nombreLimpio);
+                        mapaColumnas[nombreLimpio] = nombreReal;
                     }
                 }
 
-                // 3. DIMENSIONAR MATRIZ
-                // Buscamos la fila con el ID más alto para determinar el número de estados (filas) que necesitamos en la matriz
-                int realMaxId = 0;
+                // 2. DIMENSIONAR LA MATRIZ ÚNICA
+                int maxEstado = 0;
                 foreach (DataRow row in tablaDB.Rows)
                 {
-                    if (int.TryParse(row[0].ToString(), out int id) && id > realMaxId)
-                        realMaxId = id;
-                }
-                // Guardamos el número máximo de estados detectado para usarlo en la lógica de análisis
-                maxEstado = realMaxId;
-                // Dimensionamos la matriz con base en el número máximo de estados detectado y el tamaño del alfabeto
-                matriz = new int[maxEstado + 2, alfabeto.Count];
-
-                // 4. LLENAR LA MATRIZ CON LOS VALORES DE LAS CELDAS
-                foreach (DataRow row in tablaDB.Rows)
-                {
-                    // Obtenemos el ID del estado actual desde la primera columna de la fila
-                    if (!int.TryParse(row[0].ToString(), out int idEstadoActual)) continue;
-
-
-                    for (int i = 0; i < alfabeto.Count; i++)
+                    if (int.TryParse(row[0].ToString(), out int id) && id > maxEstado)
                     {
-                        string simbolo = alfabeto[i];
-                        object valorCelda = row[simbolo];
+                        maxEstado = id;
+                    }
 
-                        if (valorCelda == DBNull.Value ||
-                            string.IsNullOrWhiteSpace(valorCelda.ToString()) ||
-                            valorCelda.ToString().ToLower() == "error")
+
+                }
+
+
+                int totalFilas = maxEstado + 1; // +1 para la fila de ENCABEZADOS (Fila 0)
+                int totalColumnas = alfabetoTemporal.Count + 2; // +1 para columna "Estado" y +1 para columna "ACEPTA"
+
+                matrizCompleta = new string[totalFilas, totalColumnas];
+
+                // 3. LLENAR LA FILA CERO (0) CON LOS ENCABEZADOS
+                matrizCompleta[0, 0] = "Estado";
+                for (int c = 0; c < alfabetoTemporal.Count; c++)
+                {
+                    matrizCompleta[0, c + 1] = alfabetoTemporal[c];
+                }
+                matrizCompleta[0, totalColumnas - 1] = "ACEPTA";
+
+                // 4. INICIALIZAR EL RESTO DE LA MATRIZ POR DEFECTO (Para evitar nulos)
+                for (int f = 1; f < totalFilas; f++)
+                {
+                    matrizCompleta[f, 0] = f.ToString(); // Guardamos el Estado en la col 0
+                    for (int c = 1; c < totalColumnas - 1; c++)
+                    {
+                        matrizCompleta[f, c] = "Error"; // Transición por defecto
+                    }
+                    matrizCompleta[f, totalColumnas - 1] = "No valido"; // Acepta por defecto
+                }
+
+                // 5. VOLCAR LOS DATOS REALES DE LA BASE DE DATOS A LA MATRIZ
+                foreach (DataRow row in tablaDB.Rows)
+                {
+                    if (!int.TryParse(row[0].ToString(), out int idEstadoActual))
+                    {
+                        continue;
+                    }
+
+                    // La fila en la matriz será el (Estado + 1) porque la fila 0 son los encabezados
+                    int filaMatriz = idEstadoActual;
+
+                    // Llenar transiciones
+                    for (int c = 0; c < alfabetoTemporal.Count; c++)
+                    {
+                        string simbolo = alfabetoTemporal[c];
+                        string nombreColDB = mapaColumnas[simbolo]; // Buscamos cómo se llama en SQL (ej: "a1")
+
+                        object valorCelda = row[nombreColDB];
+
+                        if (valorCelda != DBNull.Value && !string.IsNullOrWhiteSpace(valorCelda.ToString()))
                         {
-                            matriz[idEstadoActual, i] = -1; // -1 significa transición a ERROR
-                        }
-                        else
-                        {
-                            if (int.TryParse(valorCelda.ToString(), out int destino))
-                                matriz[idEstadoActual, i] = destino;
-                            else
-                                matriz[idEstadoActual, i] = -1;
+                            string valorString = valorCelda.ToString().ToLower();
+                            if (valorString != "error")
+                            {
+                                matrizCompleta[filaMatriz, c + 1] = valorCelda.ToString();
+                            }
                         }
                     }
 
-                    // Guardar categoría de aceptación
-                    string acepta = row["ACEPTA"]?.ToString() ?? "No valido";
-                    categoriasEstado[idEstadoActual] = acepta;
+                    // Llenar columna ACEPTA
+                    matrizCompleta[filaMatriz, totalColumnas - 1] = row["ACEPTA"]?.ToString() ?? "No valido";
                 }
             }
         }
@@ -189,34 +265,50 @@ namespace Interfaz_Lexico
 
         private void CargarMatrizEnGrid()
         {
-            if (dgvMatriz == null) return;
+            if (dgvMatriz == null || matrizCompleta == null) return;
 
             dgvMatriz.Columns.Clear();
             dgvMatriz.Rows.Clear();
 
-            // Configurar columnas visuales
-            dgvMatriz.Columns.Add("Estado", "No.");
-            foreach (var simbolo in alfabeto)
-            {
-                dgvMatriz.Columns.Add(simbolo, simbolo);
-            }
-            dgvMatriz.Columns.Add("ACEPTA", "Categoría");
+            int totalFilas = matrizCompleta.GetLength(0);
+            int totalColumnas = matrizCompleta.GetLength(1);
 
-            // Llenar filas visuales
-            var estadosOrdenados = categoriasEstado.Keys.OrderBy(k => k);
-            foreach (var estadoId in estadosOrdenados)
+            // 1. Crear las columnas del DataGridView leyendo la Fila 0 de nuestra matriz
+            for (int c = 0; c < totalColumnas; c++)
             {
-                string[] fila = new string[alfabeto.Count + 2];
-                fila[0] = estadoId.ToString();
-                for (int j = 0; j < alfabeto.Count; j++)
+                dgvMatriz.Columns.Add(matrizCompleta[0, c], matrizCompleta[0, c]);
+            }
+
+            // 2. Agregar las filas de datos (Empezando desde la fila 1 de nuestra matriz)
+            for (int f = 1; f < totalFilas; f++)
+            {
+                string[] filaGrid = new string[totalColumnas];
+                for (int c = 0; c < totalColumnas; c++)
                 {
-                    int val = matriz[estadoId, j];
-                    fila[j + 1] = (val == -1) ? "Error" : val.ToString();
+                    filaGrid[c] = matrizCompleta[f, c];
                 }
-                fila[alfabeto.Count + 1] = categoriasEstado[estadoId];
-                dgvMatriz.Rows.Add(fila);
+                dgvMatriz.Rows.Add(filaGrid);
             }
         }
+
+        private void richProgramaFuente_TextChanged(object sender, EventArgs e)
+        {
+           //Verifica el numero de lineas
+            int NumeroDeLineas = richProgramaFuente.Lines.Count();
+
+            //Crea una lista de tokens que se llenara con los tokens de cada linea
+            List<string> Tokens = new List<string>();
+
+            Tokens.Clear();
+
+            //Recorre cada linea del programa fuente, separa las palabras por espacios y las agrega a la lista de tokens
+            for (int i = 0; i < NumeroDeLineas; i++)
+            {
+                VerificarToken(i, Tokens);
+            }
+
+        }
+
 
     }
 }

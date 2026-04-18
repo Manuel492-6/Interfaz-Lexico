@@ -34,7 +34,13 @@
             richArchivoDeTokens = new RichTextBox();
             richProgramaFuente = new RichTextBox();
             dgvMatriz = new DataGridView();
+            dgtTablaDeSimbolos = new DataGridView();
+            Identificador = new DataGridViewTextBoxColumn();
+            Nombre = new DataGridViewTextBoxColumn();
+            TipoDato = new DataGridViewTextBoxColumn();
+            Valor = new DataGridViewTextBoxColumn();
             ((System.ComponentModel.ISupportInitialize)dgvMatriz).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)dgtTablaDeSimbolos).BeginInit();
             SuspendLayout();
             // 
             // button1
@@ -80,21 +86,65 @@
             richProgramaFuente.Size = new Size(224, 252);
             richProgramaFuente.TabIndex = 5;
             richProgramaFuente.Text = "";
+            richProgramaFuente.TextChanged += richProgramaFuente_TextChanged;
             // 
             // dgvMatriz
             // 
             dgvMatriz.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dgvMatriz.Location = new Point(115, 338);
+            dgvMatriz.Location = new Point(686, 189);
             dgvMatriz.Name = "dgvMatriz";
             dgvMatriz.RowHeadersWidth = 51;
-            dgvMatriz.Size = new Size(655, 188);
+            dgvMatriz.Size = new Size(308, 188);
             dgvMatriz.TabIndex = 6;
+            // 
+            // dgtTablaDeSimbolos
+            // 
+            dgtTablaDeSimbolos.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgtTablaDeSimbolos.Columns.AddRange(new DataGridViewColumn[] { Identificador, Nombre, TipoDato, Valor });
+            dgtTablaDeSimbolos.Location = new Point(26, 357);
+            dgtTablaDeSimbolos.Name = "dgtTablaDeSimbolos";
+            dgtTablaDeSimbolos.RowHeadersWidth = 51;
+            dgtTablaDeSimbolos.Size = new Size(552, 188);
+            dgtTablaDeSimbolos.TabIndex = 7;
+            // 
+            // Identificador
+            // 
+            Identificador.HeaderText = "Identificador";
+            Identificador.MinimumWidth = 6;
+            Identificador.Name = "Identificador";
+            Identificador.ReadOnly = true;
+            Identificador.Width = 125;
+            // 
+            // Nombre
+            // 
+            Nombre.HeaderText = "Nombre";
+            Nombre.MinimumWidth = 6;
+            Nombre.Name = "Nombre";
+            Nombre.ReadOnly = true;
+            Nombre.Width = 125;
+            // 
+            // TipoDato
+            // 
+            TipoDato.HeaderText = "Tipo De Dato";
+            TipoDato.MinimumWidth = 6;
+            TipoDato.Name = "TipoDato";
+            TipoDato.ReadOnly = true;
+            TipoDato.Width = 125;
+            // 
+            // Valor
+            // 
+            Valor.HeaderText = "Valor";
+            Valor.MinimumWidth = 6;
+            Valor.Name = "Valor";
+            Valor.ReadOnly = true;
+            Valor.Width = 125;
             // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(800, 583);
+            ClientSize = new Size(1185, 583);
+            Controls.Add(dgtTablaDeSimbolos);
             Controls.Add(dgvMatriz);
             Controls.Add(richProgramaFuente);
             Controls.Add(richArchivoDeTokens);
@@ -105,6 +155,7 @@
             Text = "Form1";
             Load += Form1_Load;
             ((System.ComponentModel.ISupportInitialize)dgvMatriz).EndInit();
+            ((System.ComponentModel.ISupportInitialize)dgtTablaDeSimbolos).EndInit();
             ResumeLayout(false);
         }
 
@@ -115,5 +166,10 @@
         private RichTextBox richArchivoDeTokens;
         private RichTextBox richProgramaFuente;
         private DataGridView dgvMatriz;
+        private DataGridView dgtTablaDeSimbolos;
+        private DataGridViewTextBoxColumn Identificador;
+        private DataGridViewTextBoxColumn Nombre;
+        private DataGridViewTextBoxColumn TipoDato;
+        private DataGridViewTextBoxColumn Valor;
     }
 }
