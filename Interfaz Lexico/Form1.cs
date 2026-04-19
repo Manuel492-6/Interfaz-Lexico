@@ -9,6 +9,7 @@ namespace Interfaz_Lexico
     public partial class Form1 : Form
     {
         string NombreArchivo = "..\\..\\..\\..\\ArchivosTexto\\Archivo.txt";
+        string NombreArchivo2 = "..\\..\\..\\..\\ArchivosTexto\\Archivo2.txt";
         List<Identificador> ListaDeIdentificadores = new List<Identificador>();
         ClaseListaSimpleOrdenada<Identificador> ListaDeIdentificadoresOrdenada = new ClaseListaSimpleOrdenada<Identificador>();
         private string ConexionBD = @"Server=DESKTOP-3G6AMVL\SQLEXPRESS; Database=NovaNyx; Integrated Security=True; TrustServerCertificate=True;";
@@ -428,6 +429,28 @@ namespace Interfaz_Lexico
         {
             richProgramaFuente.ReadOnly = false;
             MessageBox.Show("El programa fuente ahora es editable.");
+        }
+
+        private void btnGuardarArchivo_Click(object sender, EventArgs e)
+        {
+
+            Archivo<string> archivoTexto = new Archivo<string>(NombreArchivo2);
+
+
+            if (File.Exists(archivoTexto.NombreArchivo))
+            {
+                archivoTexto.EliminarArchivo();
+            }
+
+            archivoTexto.HacerModoEscritura();
+
+            foreach (string linea in richArchivoDeTokens.Lines)
+            {
+                archivoTexto.AgregarObjeto(linea);
+            }
+
+            archivoTexto.CerrarArchivo();
+            MessageBox.Show("Archivo guardado correctamente.");
         }
     }
 }

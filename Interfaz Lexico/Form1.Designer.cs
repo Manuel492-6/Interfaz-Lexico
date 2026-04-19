@@ -41,6 +41,7 @@
             btnGuardarPrograma = new Button();
             btnCargarPrograma = new Button();
             btnEditarPrograma = new Button();
+            btnGuardarArchivo = new Button();
             ((System.ComponentModel.ISupportInitialize)dgtTablaDeSimbolos).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dgtErrores).BeginInit();
             SuspendLayout();
@@ -160,11 +161,22 @@
             btnEditarPrograma.UseVisualStyleBackColor = true;
             btnEditarPrograma.Click += btnEditarPrograma_Click;
             // 
+            // btnGuardarArchivo
+            // 
+            btnGuardarArchivo.Location = new Point(698, 393);
+            btnGuardarArchivo.Name = "btnGuardarArchivo";
+            btnGuardarArchivo.Size = new Size(136, 48);
+            btnGuardarArchivo.TabIndex = 12;
+            btnGuardarArchivo.Text = "Guardar Archivo";
+            btnGuardarArchivo.UseVisualStyleBackColor = true;
+            btnGuardarArchivo.Click += btnGuardarArchivo_Click;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1215, 669);
+            Controls.Add(btnGuardarArchivo);
             Controls.Add(btnEditarPrograma);
             Controls.Add(btnCargarPrograma);
             Controls.Add(btnGuardarPrograma);
@@ -194,5 +206,6 @@
         private Button btnGuardarPrograma;
         private Button btnCargarPrograma;
         private Button btnEditarPrograma;
+        private Button btnGuardarArchivo;
     }
 }
