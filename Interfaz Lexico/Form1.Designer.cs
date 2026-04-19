@@ -42,13 +42,17 @@
             btnCargarPrograma = new Button();
             btnEditarPrograma = new Button();
             btnGuardarArchivo = new Button();
+            lblNovaNyx = new Label();
+            PicNovaNyx = new PictureBox();
+            lblNovaNyxVersion = new Label();
             ((System.ComponentModel.ISupportInitialize)dgtTablaDeSimbolos).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dgtErrores).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)PicNovaNyx).BeginInit();
             SuspendLayout();
             // 
             // richArchivoDeTokens
             // 
-            richArchivoDeTokens.Location = new Point(698, 32);
+            richArchivoDeTokens.Location = new Point(748, 32);
             richArchivoDeTokens.Name = "richArchivoDeTokens";
             richArchivoDeTokens.Size = new Size(420, 337);
             richArchivoDeTokens.TabIndex = 4;
@@ -163,7 +167,7 @@
             // 
             // btnGuardarArchivo
             // 
-            btnGuardarArchivo.Location = new Point(698, 393);
+            btnGuardarArchivo.Location = new Point(748, 393);
             btnGuardarArchivo.Name = "btnGuardarArchivo";
             btnGuardarArchivo.Size = new Size(136, 48);
             btnGuardarArchivo.TabIndex = 12;
@@ -171,11 +175,45 @@
             btnGuardarArchivo.UseVisualStyleBackColor = true;
             btnGuardarArchivo.Click += btnGuardarArchivo_Click;
             // 
+            // lblNovaNyx
+            // 
+            lblNovaNyx.AutoSize = true;
+            lblNovaNyx.Font = new Font("Stencil", 25.8000011F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lblNovaNyx.ForeColor = SystemColors.ActiveCaptionText;
+            lblNovaNyx.Location = new Point(489, 12);
+            lblNovaNyx.Name = "lblNovaNyx";
+            lblNovaNyx.Size = new Size(217, 52);
+            lblNovaNyx.TabIndex = 13;
+            lblNovaNyx.Text = "NovaNyx";
+            // 
+            // PicNovaNyx
+            // 
+            PicNovaNyx.Image = Properties.Resources.WhatsApp_Image_2026_04_19_at_10_51_10_AM;
+            PicNovaNyx.Location = new Point(485, 67);
+            PicNovaNyx.Name = "PicNovaNyx";
+            PicNovaNyx.Size = new Size(214, 158);
+            PicNovaNyx.TabIndex = 14;
+            PicNovaNyx.TabStop = false;
+            PicNovaNyx.Click += PicNovaNyx_Click;
+            // 
+            // lblNovaNyxVersion
+            // 
+            lblNovaNyxVersion.AutoSize = true;
+            lblNovaNyxVersion.Location = new Point(1112, 660);
+            lblNovaNyxVersion.Name = "lblNovaNyxVersion";
+            lblNovaNyxVersion.Size = new Size(91, 20);
+            lblNovaNyxVersion.TabIndex = 15;
+            lblNovaNyxVersion.Text = "Versión 1.4.2";
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1215, 669);
+            CancelButton = btnCargarPrograma;
+            ClientSize = new Size(1215, 689);
+            Controls.Add(lblNovaNyxVersion);
+            Controls.Add(PicNovaNyx);
+            Controls.Add(lblNovaNyx);
             Controls.Add(btnGuardarArchivo);
             Controls.Add(btnEditarPrograma);
             Controls.Add(btnCargarPrograma);
@@ -185,11 +223,13 @@
             Controls.Add(richProgramaFuente);
             Controls.Add(richArchivoDeTokens);
             Name = "Form1";
-            Text = "Form1";
+            Text = "NovaNyx 1.4.2";
             Load += Form1_Load;
             ((System.ComponentModel.ISupportInitialize)dgtTablaDeSimbolos).EndInit();
             ((System.ComponentModel.ISupportInitialize)dgtErrores).EndInit();
+            ((System.ComponentModel.ISupportInitialize)PicNovaNyx).EndInit();
             ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion
@@ -207,5 +247,8 @@
         private Button btnCargarPrograma;
         private Button btnEditarPrograma;
         private Button btnGuardarArchivo;
+        private Label lblNovaNyx;
+        private PictureBox PicNovaNyx;
+        private Label lblNovaNyxVersion;
     }
 }

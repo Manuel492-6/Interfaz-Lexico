@@ -452,5 +452,10 @@ namespace Interfaz_Lexico
             archivoTexto.CerrarArchivo();
             MessageBox.Show("Archivo guardado correctamente.");
         }
+
+        private void PicNovaNyx_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }
