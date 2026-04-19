@@ -1,12 +1,14 @@
+using Microsoft.Data.SqlClient;
 using System.Data;
 using System.Diagnostics;
 using System.Drawing.Drawing2D;
-using Microsoft.Data.SqlClient;
+using System.Windows.Forms;
 
 namespace Interfaz_Lexico
 {
     public partial class Form1 : Form
     {
+        string NombreArchivo = "..\\..\\..\\..\\ArchivosTexto\\Archivo.txt";
         List<Identificador> ListaDeIdentificadores = new List<Identificador>();
         ClaseListaSimpleOrdenada<Identificador> ListaDeIdentificadoresOrdenada = new ClaseListaSimpleOrdenada<Identificador>();
         private string ConexionBD = @"Server=DESKTOP-3G6AMVL\SQLEXPRESS; Database=NovaNyx; Integrated Security=True; TrustServerCertificate=True;";
@@ -56,54 +58,14 @@ namespace Interfaz_Lexico
             {
                 // Se usan los métodos combinados para detectar la estructura y cargar los datos
                 CargarEstructuraYDatosDesdeSQL();
-                CargarMatrizEnGrid();
                 ConfigurarDataGridView();
-
+                richArchivoDeTokens.ReadOnly = true;
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Error al conectar o procesar la tabla:\n\n" + ex.Message);
             }
         }
-
-        private void button1_Click(object sender, EventArgs e)
-        {
-            int lineCount = richProgramaFuente.Lines.Count(linea => !string.IsNullOrWhiteSpace(linea));
-            MessageBox.Show(lineCount.ToString());
-
-            MessageBox.Show(richProgramaFuente.Lines[1]);
-            int lineasescritas = richProgramaFuente.Lines.Count();
-            MessageBox.Show(lineasescritas.ToString());
-
-            for (int i = 0; i < richProgramaFuente.Lines.Length; i++)
-            {
-
-                string[] palabras = richProgramaFuente.Lines[i].Split(" ", StringSplitOptions.RemoveEmptyEntries);
-                for (int j = 0; j < palabras.Length; j++)
-                {
-
-                }
-            }
-        }
-
-        private void btnAnalizar_Click(object sender, EventArgs e)
-        {
-            //Verifica el numero de lineas
-            int NumeroDeLineas = richProgramaFuente.Lines.Count();
-
-            //Crea una lista de tokens que se llenara con los tokens de cada linea
-            List<string> Tokens = new List<string>();
-
-
-            //Recorre cada linea del programa fuente, separa las palabras por espacios y las agrega a la lista de tokens
-            for (int i = 0; i < NumeroDeLineas; i++)
-            {
-                VerificarToken(i, Tokens);
-            }
-
-
-        }
-
         private void VerificarToken(int i, List<string> Tokens)
         {
             //Almacena Cada token de cada linea
@@ -165,7 +127,7 @@ namespace Interfaz_Lexico
                     {
                         //Error porque no se acepta el token
                         Debug.WriteLine($"Simbolo: EOC | Estado Actual: {EstadoActual} | Columna: {columna + 1} | Siguiente Estado: {SiguienteEstado}");
-                        Debug.WriteLine(matrizCompleta[EstadoActual, matrizCompleta.GetLength(1) - 1].ToString()); 
+                        Debug.WriteLine(matrizCompleta[EstadoActual, matrizCompleta.GetLength(1) - 1].ToString());
                         NuevoToken += Errores[matrizCompleta[EstadoActual, matrizCompleta.GetLength(1) - 1]] + " ";
                         AgregarErrores(Errores[matrizCompleta[EstadoActual, matrizCompleta.GetLength(1) - 1]], i);
                         continue;
@@ -220,7 +182,7 @@ namespace Interfaz_Lexico
             dgtTablaDeSimbolos.Rows.Clear();
             foreach (var identificador in ListaDeIdentificadoresOrdenada)
             {
-                dgtTablaDeSimbolos.Rows.Add(identificador.NumeroDeIdentificador+1, identificador.Nombre, identificador.TipoDeDato, identificador.Valor);
+                dgtTablaDeSimbolos.Rows.Add(identificador.NumeroDeIdentificador + 1, identificador.Nombre, identificador.TipoDeDato, identificador.Valor);
             }
 
             //Agrega el token de la linea a la lista de tokens, eliminando el espacio al final
@@ -345,33 +307,6 @@ namespace Interfaz_Lexico
         }
 
 
-        private void CargarMatrizEnGrid()
-        {
-            if (dgvMatriz == null || matrizCompleta == null) return;
-
-            dgvMatriz.Columns.Clear();
-            dgvMatriz.Rows.Clear();
-
-            int totalFilas = matrizCompleta.GetLength(0);
-            int totalColumnas = matrizCompleta.GetLength(1);
-
-            // 1. Crear las columnas del DataGridView leyendo la Fila 0 de nuestra matriz
-            for (int c = 0; c < totalColumnas; c++)
-            {
-                dgvMatriz.Columns.Add(matrizCompleta[0, c], matrizCompleta[0, c]);
-            }
-
-            // 2. Agregar las filas de datos (Empezando desde la fila 1 de nuestra matriz)
-            for (int f = 1; f < totalFilas; f++)
-            {
-                string[] filaGrid = new string[totalColumnas];
-                for (int c = 0; c < totalColumnas; c++)
-                {
-                    filaGrid[c] = matrizCompleta[f, c];
-                }
-                dgvMatriz.Rows.Add(filaGrid);
-            }
-        }
 
         private void richProgramaFuente_TextChanged(object sender, EventArgs e)
         {
@@ -398,7 +333,7 @@ namespace Interfaz_Lexico
                 }
                 VerificarToken(i, Tokens);
 
-                int conteoErrores = (dgtErrores.Rows.Count == 0 )? 0 : dgtErrores.Rows.Count;
+                int conteoErrores = (dgtErrores.Rows.Count == 0) ? 0 : dgtErrores.Rows.Count;
 
                 dgtErrores.Rows.Add("Total de Errores", conteoErrores);
             }
@@ -439,6 +374,59 @@ namespace Interfaz_Lexico
 
 
 
+        }
+
+        private void btnGuardarPrograma_Click(object sender, EventArgs e)
+        {
+
+            Archivo<string> archivoTexto = new Archivo<string>(NombreArchivo);
+
+
+            if (File.Exists(archivoTexto.NombreArchivo))
+            {
+                archivoTexto.EliminarArchivo();
+            }
+
+            archivoTexto.HacerModoEscritura();
+
+            foreach (string linea in richProgramaFuente.Lines)
+            {
+                archivoTexto.AgregarObjeto(linea);
+            }
+
+            archivoTexto.CerrarArchivo();
+            MessageBox.Show("Archivo guardado correctamente.");
+        }
+
+        private void btnCargarPrograma_Click(object sender, EventArgs e)
+        {
+            Archivo<string> archivoTexto = new Archivo<string>(NombreArchivo);
+
+            archivoTexto.HacerModoLectura();
+
+
+            richProgramaFuente.Clear();
+
+            // Leemos hasta que se acabe el archivo
+            while (!archivoTexto.FinArchivo)
+            {
+                string lineaLeida = archivoTexto.LeerObjeto();
+
+                if (lineaLeida != null)
+                {
+                    // Agregamos la línea al RichTextBox y damos un salto de línea
+                    richProgramaFuente.AppendText(lineaLeida + Environment.NewLine);
+                }
+            }
+
+            archivoTexto.CerrarArchivo();
+
+            richProgramaFuente.ReadOnly = true;
+        }
+
+        private void btnEditarPrograma_Click(object sender, EventArgs e)
+        {
+            richProgramaFuente.ReadOnly = false;
         }
     }
 }
