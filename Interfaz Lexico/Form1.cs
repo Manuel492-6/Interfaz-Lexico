@@ -427,6 +427,7 @@ namespace Interfaz_Lexico
         private void btnEditarPrograma_Click(object sender, EventArgs e)
         {
             richProgramaFuente.ReadOnly = false;
+            MessageBox.Show("El programa fuente ahora es editable.");
         }
     }
 }
