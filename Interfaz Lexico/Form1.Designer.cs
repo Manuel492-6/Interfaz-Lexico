@@ -209,6 +209,7 @@
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
+            BackColor = Color.AliceBlue;
             CancelButton = btnCargarPrograma;
             ClientSize = new Size(1215, 689);
             Controls.Add(lblNovaNyxVersion);
