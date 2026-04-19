@@ -13,6 +13,37 @@ namespace Interfaz_Lexico
         private string[,] matrizCompleta;
         private List<string> alfabetoTemporal = new List<string>();
 
+        Dictionary<string, string> Errores = new Dictionary<string, string>()
+        {
+            {"Error identificador no valido","__EIDNV__" },
+            {"Error operador aritmetico no valido","__EARONV__" },
+            {"Error operador logico no valido","__ELOPNV__" },
+            { "Error operador relacional no valido","__EREONV__"},
+            {"Error operador de asignacion no valido","__EALONV__" },
+            { "Error constante numerica no valida","__ENUCNV__"},
+            { "Error cadena no valida","__ESTRNV__"},
+            {"Error comentario no valido","__ECOMNV__"},
+            {"Error caracter especial no valido","__ESPCNV__"},
+            {"Error palabra reservada no valida","__ERWNV__"},
+            {"No valido","__ERROR__" }
+        };
+
+        Dictionary<string, string> Errores2 = new Dictionary<string, string>()
+        {
+            {"__EIDNV__", "Error identificador no valido"},
+            {"__EARONV__", "Error operador aritmetico no valido"},
+            {"__ELOPNV__", "Error operador logico no valido"},
+            {"__EREONV__", "Error operador relacional no valido"},
+            {"__EALONV__", "Error operador de asignacion no valido"},
+            {"__ENUCNV__", "Error constante numerica no valida"},
+            {"__ESTRNV__", "Error cadena no valida"},
+            {"__ECOMNV__", "Error comentario no valido"},
+            {"__ESPCNV__", "Error caracter especial no valido"},
+            {"__ERWNV__", "Error palabra reservada no valida"},
+            {"__ERROR__", "No valido"}
+         };
+
+
         public Form1()
         {
             InitializeComponent();
@@ -26,6 +57,7 @@ namespace Interfaz_Lexico
                 // Se usan los métodos combinados para detectar la estructura y cargar los datos
                 CargarEstructuraYDatosDesdeSQL();
                 CargarMatrizEnGrid();
+                ConfigurarDataGridView();
 
             }
             catch (Exception ex)
@@ -49,7 +81,7 @@ namespace Interfaz_Lexico
                 string[] palabras = richProgramaFuente.Lines[i].Split(" ", StringSplitOptions.RemoveEmptyEntries);
                 for (int j = 0; j < palabras.Length; j++)
                 {
-                    listBox1.Items.Add(palabras[j]);
+
                 }
             }
         }
@@ -76,11 +108,14 @@ namespace Interfaz_Lexico
         {
             //Almacena Cada token de cada linea
             string NuevoToken = "";
-            
+
             //Separa las palabras de cada linea por espacios y las agrega a la lista de tokens
             string[] palabras = richProgramaFuente.Lines[i].Split(" ", StringSplitOptions.RemoveEmptyEntries);
 
             bool Error = false;
+
+            richArchivoDeTokens.Clear();
+
 
             //Agrega cada palabra de la linea a la variable NuevoToken, separada por un espacio
             for (int j = 0; j < palabras.Length; j++)
@@ -89,18 +124,20 @@ namespace Interfaz_Lexico
                 int SiguienteEstado = 1;
                 int columna = 0;
                 int contadorChar = 0;
-                
+
                 foreach (char simbolo in palabras[j])
                 {
                     contadorChar++;
 
                     columna = alfabetoTemporal.IndexOf(simbolo.ToString());
-                    
-                    
+
+
                     if (columna == -1)
                     {
-                        NuevoToken += "ErrorS" + " ";
+                        NuevoToken += "__ERROR__ " + " ";
                         Debug.WriteLine($"Simbolo: {simbolo} no reconocido en el alfabeto.");
+                        AgregarErrores("__ERROR__", i);
+                        Error = true;
                         continue;
                     }
 
@@ -110,7 +147,8 @@ namespace Interfaz_Lexico
                     if (SiguienteEstado == -1)
                     {
                         //Error porque no se acepta el token
-                        MessageBox.Show(matrizCompleta[EstadoActual, matrizCompleta.GetLength(1) - 1]);
+                        NuevoToken += Errores[matrizCompleta[EstadoActual, matrizCompleta.GetLength(1) - 1]] + " ";
+                        AgregarErrores(Errores[matrizCompleta[EstadoActual, matrizCompleta.GetLength(1) - 1]], i);
                         Error = true;
                         return;
                     }
@@ -122,55 +160,67 @@ namespace Interfaz_Lexico
                     columna = alfabetoTemporal.IndexOf("EOC");
 
                     SiguienteEstado = int.TryParse(matrizCompleta[EstadoActual, columna + 1], out int resultado) ? resultado : -1;
-                    
+
                     if (SiguienteEstado == -1)
                     {
                         //Error porque no se acepta el token
                         Debug.WriteLine($"Simbolo: EOC | Estado Actual: {EstadoActual} | Columna: {columna + 1} | Siguiente Estado: {SiguienteEstado}");
-                        Debug.WriteLine(matrizCompleta[EstadoActual,matrizCompleta.GetLength(1)-1].ToString())
-;
+                        Debug.WriteLine(matrizCompleta[EstadoActual, matrizCompleta.GetLength(1) - 1].ToString()); 
+                        NuevoToken += Errores[matrizCompleta[EstadoActual, matrizCompleta.GetLength(1) - 1]] + " ";
+                        AgregarErrores(Errores[matrizCompleta[EstadoActual, matrizCompleta.GetLength(1) - 1]], i);
                         continue;
                     }
                     else
                     {
-
-                        if (contadorChar == palabras[j].Length)
+                        if (matrizCompleta[SiguienteEstado, matrizCompleta.GetLength(1) - 1] == "IDV")
                         {
-                            Debug.WriteLine("Misma longitud");                        
-                            Identificador nuevoIdentificador = new Identificador();
-                            nuevoIdentificador.NumeroDeIdentificador = j;
-                            nuevoIdentificador.Nombre = palabras[j];
-                            nuevoIdentificador.Valor = "Null";
-                            nuevoIdentificador.TipoDeDato = "Null";
-                            if (ListaDeIdentificadoresOrdenada.Vacia == true)
-                            {
-                                ListaDeIdentificadoresOrdenada.Insertar(nuevoIdentificador);
-                            }
 
-                            if (ListaDeIdentificadoresOrdenada.Buscar(nuevoIdentificador) == false)
+                            if (contadorChar == palabras[j].Length)
                             {
-                                ListaDeIdentificadoresOrdenada.Insertar(nuevoIdentificador);
+                                Debug.WriteLine("Misma longitud");
+                                Identificador nuevoIdentificador = new Identificador();
+                                nuevoIdentificador.NumeroDeIdentificador = j;
+                                nuevoIdentificador.Nombre = palabras[j];
+                                nuevoIdentificador.Valor = "Null";
+                                nuevoIdentificador.TipoDeDato = "Null";
+                                if (ListaDeIdentificadoresOrdenada.Vacia == true)
+                                {
+                                    ListaDeIdentificadoresOrdenada.Insertar(nuevoIdentificador);
+                                }
+
+                                if (ListaDeIdentificadoresOrdenada.Buscar(nuevoIdentificador) == false)
+                                {
+                                    ListaDeIdentificadoresOrdenada.Insertar(nuevoIdentificador);
+                                }
+                                else
+                                {
+                                    Debug.WriteLine($"El identificador '{palabras[j]}' ya existe en la tabla de símbolos.");
+                                }
                             }
-                            else
-                            {
-                                Debug.WriteLine($"El identificador '{palabras[j]}' ya existe en la tabla de símbolos.");
-                            }
+                            NuevoToken += matrizCompleta[SiguienteEstado, matrizCompleta.GetLength(1) - 1] + " ";
+                        }
+                        else
+                        {
+                            //Token aceptado
+                            NuevoToken += matrizCompleta[SiguienteEstado, matrizCompleta.GetLength(1) - 1] + " ";
                         }
 
-                        //Token aceptado
-                        NuevoToken += matrizCompleta[SiguienteEstado, matrizCompleta.GetLength(1) - 1] + " ";
+
+
                     }
 
-                       
+
                 }
+                Error = false;
                 Debug.WriteLine("---------------------------------------");
 
             }
 
+
             dgtTablaDeSimbolos.Rows.Clear();
             foreach (var identificador in ListaDeIdentificadoresOrdenada)
             {
-                dgtTablaDeSimbolos.Rows.Add(identificador.NumeroDeIdentificador, identificador.Nombre, identificador.TipoDeDato, identificador.Valor);
+                dgtTablaDeSimbolos.Rows.Add(identificador.NumeroDeIdentificador+1, identificador.Nombre, identificador.TipoDeDato, identificador.Valor);
             }
 
             //Agrega el token de la linea a la lista de tokens, eliminando el espacio al final
@@ -179,7 +229,6 @@ namespace Interfaz_Lexico
 
             //Agrega los token al nuevo archivo de tokens
             richArchivoDeTokens.Lines = Tokens.ToArray();
-
             palabras = null;
         }
 
@@ -326,26 +375,70 @@ namespace Interfaz_Lexico
 
         private void richProgramaFuente_TextChanged(object sender, EventArgs e)
         {
-           //Verifica el numero de lineas
+            //Verifica el numero de lineas
             int NumeroDeLineas = richProgramaFuente.Lines.Count();
 
             //Crea una lista de tokens que se llenara con los tokens de cada linea
             List<string> Tokens = new List<string>();
 
             Tokens.Clear();
-            if(ListaDeIdentificadoresOrdenada.Vacia == false)
+            if (ListaDeIdentificadoresOrdenada.Vacia == false)
             {
                 ListaDeIdentificadoresOrdenada.Vaciar();
             }
 
+            dgtErrores.Rows.Clear();
+
             //Recorre cada linea del programa fuente, separa las palabras por espacios y las agrega a la lista de tokens
             for (int i = 0; i < NumeroDeLineas; i++)
             {
+                if (dgtErrores.Rows.Count > 1)
+                {
+                    dgtErrores.Rows.RemoveAt(dgtErrores.Rows.Count - 1);
+                }
                 VerificarToken(i, Tokens);
+
+                int conteoErrores = (dgtErrores.Rows.Count == 0 )? 0 : dgtErrores.Rows.Count;
+
+                dgtErrores.Rows.Add("Total de Errores", conteoErrores);
             }
 
         }
 
+        private void AgregarErrores(string error, int linea)
+        {
+            error = Errores2.ContainsKey(error) ? Errores2[error] : "Error desconocido";
 
+            dgtErrores.Rows.Add(linea + 1, error);
+
+
+
+            foreach (DataGridViewRow row in dgtErrores.Rows)
+            {
+                if (row.Cells[0].Value != null)
+                {
+                    row.DefaultCellStyle.BackColor = Color.Red;
+                }
+            }
+
+
+
+        }
+
+        private void ConfigurarDataGridView()
+        {
+            dgtErrores.AllowUserToDeleteRows = false;
+            dgtErrores.AllowUserToAddRows = false;
+            dgtErrores.ReadOnly = true;
+            dgtErrores.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+
+            dgtTablaDeSimbolos.AllowUserToAddRows = false;
+            dgtTablaDeSimbolos.AllowUserToDeleteRows = false;
+            dgtTablaDeSimbolos.ReadOnly = true;
+            dgtTablaDeSimbolos.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+
+
+
+        }
     }
 }

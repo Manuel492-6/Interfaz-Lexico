@@ -29,7 +29,6 @@
         private void InitializeComponent()
         {
             button1 = new Button();
-            listBox1 = new ListBox();
             btnAnalizar = new Button();
             richArchivoDeTokens = new RichTextBox();
             richProgramaFuente = new RichTextBox();
@@ -39,8 +38,12 @@
             Nombre = new DataGridViewTextBoxColumn();
             TipoDato = new DataGridViewTextBoxColumn();
             Valor = new DataGridViewTextBoxColumn();
+            dgtErrores = new DataGridView();
+            Linea = new DataGridViewTextBoxColumn();
+            Error = new DataGridViewTextBoxColumn();
             ((System.ComponentModel.ISupportInitialize)dgvMatriz).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dgtTablaDeSimbolos).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)dgtErrores).BeginInit();
             SuspendLayout();
             // 
             // button1
@@ -52,14 +55,6 @@
             button1.Text = "button1";
             button1.UseVisualStyleBackColor = true;
             button1.Click += button1_Click;
-            // 
-            // listBox1
-            // 
-            listBox1.FormattingEnabled = true;
-            listBox1.Location = new Point(620, 69);
-            listBox1.Name = "listBox1";
-            listBox1.Size = new Size(150, 104);
-            listBox1.TabIndex = 2;
             // 
             // btnAnalizar
             // 
@@ -91,7 +86,7 @@
             // dgvMatriz
             // 
             dgvMatriz.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dgvMatriz.Location = new Point(686, 189);
+            dgvMatriz.Location = new Point(790, 357);
             dgvMatriz.Name = "dgvMatriz";
             dgvMatriz.RowHeadersWidth = 51;
             dgvMatriz.Size = new Size(308, 188);
@@ -139,29 +134,55 @@
             Valor.ReadOnly = true;
             Valor.Width = 125;
             // 
+            // dgtErrores
+            // 
+            dgtErrores.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgtErrores.Columns.AddRange(new DataGridViewColumn[] { Linea, Error });
+            dgtErrores.Location = new Point(554, 32);
+            dgtErrores.Name = "dgtErrores";
+            dgtErrores.RowHeadersWidth = 51;
+            dgtErrores.Size = new Size(603, 188);
+            dgtErrores.TabIndex = 8;
+            // 
+            // Linea
+            // 
+            Linea.HeaderText = "Linea";
+            Linea.MinimumWidth = 6;
+            Linea.Name = "Linea";
+            Linea.ReadOnly = true;
+            Linea.Width = 125;
+            // 
+            // Error
+            // 
+            Error.HeaderText = "Error";
+            Error.MinimumWidth = 6;
+            Error.Name = "Error";
+            Error.ReadOnly = true;
+            Error.Width = 125;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1185, 583);
+            Controls.Add(dgtErrores);
             Controls.Add(dgtTablaDeSimbolos);
             Controls.Add(dgvMatriz);
             Controls.Add(richProgramaFuente);
             Controls.Add(richArchivoDeTokens);
             Controls.Add(btnAnalizar);
-            Controls.Add(listBox1);
             Controls.Add(button1);
             Name = "Form1";
             Text = "Form1";
             Load += Form1_Load;
             ((System.ComponentModel.ISupportInitialize)dgvMatriz).EndInit();
             ((System.ComponentModel.ISupportInitialize)dgtTablaDeSimbolos).EndInit();
+            ((System.ComponentModel.ISupportInitialize)dgtErrores).EndInit();
             ResumeLayout(false);
         }
 
         #endregion
         private Button button1;
-        private ListBox listBox1;
         private Button btnAnalizar;
         private RichTextBox richArchivoDeTokens;
         private RichTextBox richProgramaFuente;
@@ -171,5 +192,8 @@
         private DataGridViewTextBoxColumn Nombre;
         private DataGridViewTextBoxColumn TipoDato;
         private DataGridViewTextBoxColumn Valor;
+        private DataGridView dgtErrores;
+        private DataGridViewTextBoxColumn Linea;
+        private DataGridViewTextBoxColumn Error;
     }
 }
