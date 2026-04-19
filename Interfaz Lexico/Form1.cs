@@ -50,7 +50,6 @@ namespace Interfaz_Lexico
         public Form1()
         {
             InitializeComponent();
-
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -311,6 +310,7 @@ namespace Interfaz_Lexico
 
         private void richProgramaFuente_TextChanged(object sender, EventArgs e)
         {
+
             //Verifica el numero de lineas
             int NumeroDeLineas = richProgramaFuente.Lines.Count();
 
@@ -328,11 +328,15 @@ namespace Interfaz_Lexico
             //Recorre cada linea del programa fuente, separa las palabras por espacios y las agrega a la lista de tokens
             for (int i = 0; i < NumeroDeLineas; i++)
             {
-                if (dgtErrores.Rows.Count > 1)
+                Debug.WriteLine($"Numero de filas {dgtErrores.Rows.Count}");
+
+                if (dgtErrores.Rows.Count > 0)
                 {
                     dgtErrores.Rows.RemoveAt(dgtErrores.Rows.Count - 1);
                 }
+
                 VerificarToken(i, Tokens);
+
 
                 int conteoErrores = (dgtErrores.Rows.Count == 0) ? 0 : dgtErrores.Rows.Count;
 
@@ -407,6 +411,8 @@ namespace Interfaz_Lexico
 
 
             richProgramaFuente.Clear();
+            dgtErrores.Rows.Clear();
+            dgtTablaDeSimbolos.Rows.Clear();
 
             // Leemos hasta que se acabe el archivo
             while (!archivoTexto.FinArchivo)
@@ -423,6 +429,14 @@ namespace Interfaz_Lexico
             archivoTexto.CerrarArchivo();
 
             richProgramaFuente.ReadOnly = true;
+
+
+            richProgramaFuente.HandleCreated += (s, ev) =>
+            {
+                // Forzamos el evento TextChanged para procesar el programa fuente cargado
+                richProgramaFuente_TextChanged(s, EventArgs.Empty);
+            };
+            richProgramaFuente.AppendText(""); // Esto disparará el evento TextChanged
         }
 
         private void btnEditarPrograma_Click(object sender, EventArgs e)
@@ -453,9 +467,5 @@ namespace Interfaz_Lexico
             MessageBox.Show("Archivo guardado correctamente.");
         }
 
-        private void PicNovaNyx_Click(object sender, EventArgs e)
-        {
-
-        }
     }
 }

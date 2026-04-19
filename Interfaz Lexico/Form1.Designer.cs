@@ -45,6 +45,10 @@
             lblNovaNyx = new Label();
             PicNovaNyx = new PictureBox();
             lblNovaNyxVersion = new Label();
+            label1 = new Label();
+            label2 = new Label();
+            label3 = new Label();
+            label4 = new Label();
             ((System.ComponentModel.ISupportInitialize)dgtTablaDeSimbolos).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dgtErrores).BeginInit();
             ((System.ComponentModel.ISupportInitialize)PicNovaNyx).BeginInit();
@@ -52,7 +56,7 @@
             // 
             // richArchivoDeTokens
             // 
-            richArchivoDeTokens.Location = new Point(748, 32);
+            richArchivoDeTokens.Location = new Point(748, 67);
             richArchivoDeTokens.Name = "richArchivoDeTokens";
             richArchivoDeTokens.Size = new Size(420, 337);
             richArchivoDeTokens.TabIndex = 4;
@@ -60,7 +64,7 @@
             // 
             // richProgramaFuente
             // 
-            richProgramaFuente.Location = new Point(26, 32);
+            richProgramaFuente.Location = new Point(26, 67);
             richProgramaFuente.Name = "richProgramaFuente";
             richProgramaFuente.Size = new Size(420, 337);
             richProgramaFuente.TabIndex = 5;
@@ -71,7 +75,7 @@
             // 
             dgtTablaDeSimbolos.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgtTablaDeSimbolos.Columns.AddRange(new DataGridViewColumn[] { Identificador, Nombre, TipoDato, Valor });
-            dgtTablaDeSimbolos.Location = new Point(26, 458);
+            dgtTablaDeSimbolos.Location = new Point(26, 546);
             dgtTablaDeSimbolos.Name = "dgtTablaDeSimbolos";
             dgtTablaDeSimbolos.RowHeadersWidth = 51;
             dgtTablaDeSimbolos.Size = new Size(552, 188);
@@ -113,7 +117,7 @@
             // 
             dgtErrores.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgtErrores.Columns.AddRange(new DataGridViewColumn[] { Linea, Error });
-            dgtErrores.Location = new Point(600, 458);
+            dgtErrores.Location = new Point(600, 544);
             dgtErrores.Name = "dgtErrores";
             dgtErrores.RowHeadersWidth = 51;
             dgtErrores.Size = new Size(603, 188);
@@ -137,7 +141,7 @@
             // 
             // btnGuardarPrograma
             // 
-            btnGuardarPrograma.Location = new Point(310, 393);
+            btnGuardarPrograma.Location = new Point(310, 432);
             btnGuardarPrograma.Name = "btnGuardarPrograma";
             btnGuardarPrograma.Size = new Size(136, 48);
             btnGuardarPrograma.TabIndex = 9;
@@ -147,7 +151,7 @@
             // 
             // btnCargarPrograma
             // 
-            btnCargarPrograma.Location = new Point(26, 393);
+            btnCargarPrograma.Location = new Point(26, 432);
             btnCargarPrograma.Name = "btnCargarPrograma";
             btnCargarPrograma.Size = new Size(136, 48);
             btnCargarPrograma.TabIndex = 10;
@@ -157,7 +161,7 @@
             // 
             // btnEditarPrograma
             // 
-            btnEditarPrograma.Location = new Point(168, 393);
+            btnEditarPrograma.Location = new Point(168, 432);
             btnEditarPrograma.Name = "btnEditarPrograma";
             btnEditarPrograma.Size = new Size(136, 48);
             btnEditarPrograma.TabIndex = 11;
@@ -167,7 +171,7 @@
             // 
             // btnGuardarArchivo
             // 
-            btnGuardarArchivo.Location = new Point(748, 393);
+            btnGuardarArchivo.Location = new Point(748, 432);
             btnGuardarArchivo.Name = "btnGuardarArchivo";
             btnGuardarArchivo.Size = new Size(136, 48);
             btnGuardarArchivo.TabIndex = 12;
@@ -194,23 +198,66 @@
             PicNovaNyx.Size = new Size(214, 158);
             PicNovaNyx.TabIndex = 14;
             PicNovaNyx.TabStop = false;
-            PicNovaNyx.Click += PicNovaNyx_Click;
             // 
             // lblNovaNyxVersion
             // 
             lblNovaNyxVersion.AutoSize = true;
-            lblNovaNyxVersion.Location = new Point(1112, 660);
+            lblNovaNyxVersion.Location = new Point(1112, 735);
             lblNovaNyxVersion.Name = "lblNovaNyxVersion";
             lblNovaNyxVersion.Size = new Size(91, 20);
             lblNovaNyxVersion.TabIndex = 15;
             lblNovaNyxVersion.Text = "Versión 1.4.2";
+            // 
+            // label1
+            // 
+            label1.AutoSize = true;
+            label1.Font = new Font("Arial", 13.8F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label1.Location = new Point(26, 22);
+            label1.Name = "label1";
+            label1.Size = new Size(202, 27);
+            label1.TabIndex = 16;
+            label1.Text = "Programa Fuente";
+            // 
+            // label2
+            // 
+            label2.AutoSize = true;
+            label2.Font = new Font("Arial", 13.8F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label2.Location = new Point(748, 22);
+            label2.Name = "label2";
+            label2.Size = new Size(223, 27);
+            label2.TabIndex = 17;
+            label2.Text = "Archivo De Tokens";
+            // 
+            // label3
+            // 
+            label3.AutoSize = true;
+            label3.Font = new Font("Arial", 13.8F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label3.Location = new Point(600, 502);
+            label3.Name = "label3";
+            label3.Size = new Size(94, 27);
+            label3.TabIndex = 18;
+            label3.Text = "Errores";
+            // 
+            // label4
+            // 
+            label4.AutoSize = true;
+            label4.Font = new Font("Arial", 13.8F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label4.Location = new Point(26, 502);
+            label4.Name = "label4";
+            label4.Size = new Size(217, 27);
+            label4.TabIndex = 19;
+            label4.Text = "Tabla De Simbolos";
             // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             CancelButton = btnCargarPrograma;
-            ClientSize = new Size(1215, 689);
+            ClientSize = new Size(1215, 764);
+            Controls.Add(label4);
+            Controls.Add(label3);
+            Controls.Add(label2);
+            Controls.Add(label1);
             Controls.Add(lblNovaNyxVersion);
             Controls.Add(PicNovaNyx);
             Controls.Add(lblNovaNyx);
@@ -250,5 +297,9 @@
         private Label lblNovaNyx;
         private PictureBox PicNovaNyx;
         private Label lblNovaNyxVersion;
+        private Label label1;
+        private Label label2;
+        private Label label3;
+        private Label label4;
     }
 }
