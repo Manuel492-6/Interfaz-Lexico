@@ -43,7 +43,7 @@ namespace Interfaz_Lexico
             {"__ECOMNV__", "Error comentario no valido"},
             {"__ESPCNV__", "Error caracter especial no valido"},
             {"__ERWNV__", "Error palabra reservada no valida"},
-            {"__ERROR__", "No valido"}
+            {"__ERROR__", "Error no valido por caracteres no validos"}
          };
 
 
@@ -60,6 +60,17 @@ namespace Interfaz_Lexico
                 CargarEstructuraYDatosDesdeSQL();
                 ConfigurarDataGridView();
                 richArchivoDeTokens.ReadOnly = true;
+
+                // Conectamos el evento Paint de nuestro PictureBox a nuestro método
+                picLineas.Paint += picLineas_Paint;
+                picLinea2.Paint += picLinea2_Paint;
+
+                // Conectamos el Scroll del RichTextBox para que los números bajen al usar la rueda del ratón
+                richProgramaFuente.VScroll += (s, ev) => picLineas.Invalidate();
+                richProgramaFuente.HScroll += (s, ev) => picLineas.Invalidate();
+
+                richArchivoDeTokens.VScroll += (s, ev) => picLinea2.Invalidate();
+                richArchivoDeTokens.HScroll += (s, ev) => picLinea2.Invalidate();
             }
             catch (Exception ex)
             {
@@ -109,10 +120,10 @@ namespace Interfaz_Lexico
                     if (SiguienteEstado == -1)
                     {
                         //Error porque no se acepta el token
-                        NuevoToken += Errores[matrizCompleta[EstadoActual, matrizCompleta.GetLength(1) - 1]] + " ";
+                        NuevoToken += Errores.ContainsKey(matrizCompleta[EstadoActual, matrizCompleta.GetLength(1) - 1]) ? Errores[matrizCompleta[EstadoActual, matrizCompleta.GetLength(1) - 1]] : "__ERROR__";
                         AgregarErrores(Errores[matrizCompleta[EstadoActual, matrizCompleta.GetLength(1) - 1]], i);
                         Error = true;
-                        return;
+                        continue;
                     }
                     EstadoActual = SiguienteEstado;
                 }
@@ -310,6 +321,7 @@ namespace Interfaz_Lexico
 
         private void richProgramaFuente_TextChanged(object sender, EventArgs e)
         {
+            picLineas.Invalidate();
 
             //Verifica el numero de lineas
             int NumeroDeLineas = richProgramaFuente.Lines.Count();
@@ -334,7 +346,6 @@ namespace Interfaz_Lexico
                 {
                     dgtErrores.Rows.RemoveAt(dgtErrores.Rows.Count - 1);
                 }
-
                 VerificarToken(i, Tokens);
 
 
@@ -429,7 +440,7 @@ namespace Interfaz_Lexico
             archivoTexto.CerrarArchivo();
 
             richProgramaFuente.ReadOnly = true;
-
+            richProgramaFuente.Enabled = false;
 
             richProgramaFuente.HandleCreated += (s, ev) =>
             {
@@ -442,6 +453,7 @@ namespace Interfaz_Lexico
         private void btnEditarPrograma_Click(object sender, EventArgs e)
         {
             richProgramaFuente.ReadOnly = false;
+            richProgramaFuente.Enabled = true;
             MessageBox.Show("El programa fuente ahora es editable.");
         }
 
@@ -467,5 +479,68 @@ namespace Interfaz_Lexico
             MessageBox.Show("Archivo guardado correctamente.");
         }
 
+        // Método que dibuja los números en el PictureBox
+        private void picLineas_Paint(object sender, PaintEventArgs e)
+        {
+            // 1. Calculamos cuál es la primera y última línea que el usuario tiene en pantalla
+            int primerCaracterVisible = richProgramaFuente.GetCharIndexFromPosition(new Point(0, 0));
+            int primeraLineaVisible = richProgramaFuente.GetLineFromCharIndex(primerCaracterVisible);
+
+            int ultimoCaracterVisible = richProgramaFuente.GetCharIndexFromPosition(new Point(0, richProgramaFuente.Height));
+            int ultimaLineaVisible = richProgramaFuente.GetLineFromCharIndex(ultimoCaracterVisible);
+
+            // 2. Elegimos la fuente y el color de los números (Usa la misma fuente que tu código)
+            Font fuente = richProgramaFuente.Font;
+            Brush brocha = Brushes.Teal; // Color de los números (puedes cambiarlo a Gray, Blue, etc.)
+
+            // 3. Dibujamos los números uno por uno
+            for (int i = primeraLineaVisible; i <= ultimaLineaVisible; i++)
+            {
+                // Buscamos la coordenada 'Y' exacta de esa línea dentro del RichTextBox
+                int indicePrimerCaracterLinea = richProgramaFuente.GetFirstCharIndexFromLine(i);
+                Point posicion = richProgramaFuente.GetPositionFromCharIndex(indicePrimerCaracterLinea);
+
+                // Alineamos el número a la derecha del PictureBox y lo dibujamos
+                string numeroDeLinea = (i + 1).ToString();
+                SizeF tamanoTexto = e.Graphics.MeasureString(numeroDeLinea, fuente);
+
+                // Dibuja el texto en la posición calculada
+                e.Graphics.DrawString(numeroDeLinea, fuente, brocha, picLineas.Width - tamanoTexto.Width - 5, posicion.Y);
+            }
+        }
+
+        private void picLinea2_Paint(object sender, PaintEventArgs e)
+        {
+            // 1. Calculamos cuál es la primera y última línea que el usuario tiene en pantalla
+            int primerCaracterVisible = richArchivoDeTokens.GetCharIndexFromPosition(new Point(0, 0));
+            int primeraLineaVisible = richArchivoDeTokens.GetLineFromCharIndex(primerCaracterVisible);
+
+            int ultimoCaracterVisible = richArchivoDeTokens.GetCharIndexFromPosition(new Point(0, richArchivoDeTokens.Height));
+            int ultimaLineaVisible = richArchivoDeTokens.GetLineFromCharIndex(ultimoCaracterVisible);
+
+            // 2. Elegimos la fuente y el color de los números (Usa la misma fuente que tu código)
+            Font fuente = richArchivoDeTokens.Font;
+            Brush brocha = Brushes.Teal; // Color de los números (puedes cambiarlo a Gray, Blue, etc.)
+
+            // 3. Dibujamos los números uno por uno
+            for (int i = primeraLineaVisible; i <= ultimaLineaVisible; i++)
+            {
+                // Buscamos la coordenada 'Y' exacta de esa línea dentro del RichTextBox
+                int indicePrimerCaracterLinea = richArchivoDeTokens.GetFirstCharIndexFromLine(i);
+                Point posicion = richArchivoDeTokens.GetPositionFromCharIndex(indicePrimerCaracterLinea);
+
+                // Alineamos el número a la derecha del PictureBox y lo dibujamos
+                string numeroDeLinea = (i + 1).ToString();
+                SizeF tamanoTexto = e.Graphics.MeasureString(numeroDeLinea, fuente);
+
+                // Dibuja el texto en la posición calculada
+                e.Graphics.DrawString(numeroDeLinea, fuente, brocha, picLinea2.Width - tamanoTexto.Width - 5, posicion.Y);
+            }
+        }
+
+        private void richArchivoDeTokens_TextChanged(object sender, EventArgs e)
+        {
+            picLinea2.Invalidate();
+        }
     }
 }

@@ -28,6 +28,8 @@
         /// </summary>
         private void InitializeComponent()
         {
+            DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle2 = new DataGridViewCellStyle();
             richArchivoDeTokens = new RichTextBox();
             richProgramaFuente = new RichTextBox();
             dgtTablaDeSimbolos = new DataGridView();
@@ -49,22 +51,27 @@
             label2 = new Label();
             label3 = new Label();
             label4 = new Label();
+            picLineas = new PictureBox();
+            picLinea2 = new PictureBox();
             ((System.ComponentModel.ISupportInitialize)dgtTablaDeSimbolos).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dgtErrores).BeginInit();
             ((System.ComponentModel.ISupportInitialize)PicNovaNyx).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)picLineas).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)picLinea2).BeginInit();
             SuspendLayout();
             // 
             // richArchivoDeTokens
             // 
-            richArchivoDeTokens.Location = new Point(748, 67);
+            richArchivoDeTokens.Location = new Point(956, 67);
             richArchivoDeTokens.Name = "richArchivoDeTokens";
             richArchivoDeTokens.Size = new Size(420, 337);
             richArchivoDeTokens.TabIndex = 4;
             richArchivoDeTokens.Text = "";
+            richArchivoDeTokens.TextChanged += richArchivoDeTokens_TextChanged;
             // 
             // richProgramaFuente
             // 
-            richProgramaFuente.Location = new Point(26, 67);
+            richProgramaFuente.Location = new Point(143, 67);
             richProgramaFuente.Name = "richProgramaFuente";
             richProgramaFuente.Size = new Size(420, 337);
             richProgramaFuente.TabIndex = 5;
@@ -73,6 +80,8 @@
             // 
             // dgtTablaDeSimbolos
             // 
+            dataGridViewCellStyle1.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            dgtTablaDeSimbolos.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle1;
             dgtTablaDeSimbolos.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgtTablaDeSimbolos.Columns.AddRange(new DataGridViewColumn[] { Identificador, Nombre, TipoDato, Valor });
             dgtTablaDeSimbolos.Location = new Point(26, 546);
@@ -115,6 +124,8 @@
             // 
             // dgtErrores
             // 
+            dataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            dgtErrores.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle2;
             dgtErrores.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgtErrores.Columns.AddRange(new DataGridViewColumn[] { Linea, Error });
             dgtErrores.Location = new Point(600, 544);
@@ -141,7 +152,7 @@
             // 
             // btnGuardarPrograma
             // 
-            btnGuardarPrograma.Location = new Point(310, 432);
+            btnGuardarPrograma.Location = new Point(427, 432);
             btnGuardarPrograma.Name = "btnGuardarPrograma";
             btnGuardarPrograma.Size = new Size(136, 48);
             btnGuardarPrograma.TabIndex = 9;
@@ -151,7 +162,7 @@
             // 
             // btnCargarPrograma
             // 
-            btnCargarPrograma.Location = new Point(26, 432);
+            btnCargarPrograma.Location = new Point(143, 432);
             btnCargarPrograma.Name = "btnCargarPrograma";
             btnCargarPrograma.Size = new Size(136, 48);
             btnCargarPrograma.TabIndex = 10;
@@ -161,7 +172,7 @@
             // 
             // btnEditarPrograma
             // 
-            btnEditarPrograma.Location = new Point(168, 432);
+            btnEditarPrograma.Location = new Point(285, 432);
             btnEditarPrograma.Name = "btnEditarPrograma";
             btnEditarPrograma.Size = new Size(136, 48);
             btnEditarPrograma.TabIndex = 11;
@@ -171,7 +182,7 @@
             // 
             // btnGuardarArchivo
             // 
-            btnGuardarArchivo.Location = new Point(748, 432);
+            btnGuardarArchivo.Location = new Point(959, 432);
             btnGuardarArchivo.Name = "btnGuardarArchivo";
             btnGuardarArchivo.Size = new Size(136, 48);
             btnGuardarArchivo.TabIndex = 12;
@@ -184,7 +195,7 @@
             lblNovaNyx.AutoSize = true;
             lblNovaNyx.Font = new Font("Stencil", 25.8000011F, FontStyle.Regular, GraphicsUnit.Point, 0);
             lblNovaNyx.ForeColor = SystemColors.ActiveCaptionText;
-            lblNovaNyx.Location = new Point(489, 12);
+            lblNovaNyx.Location = new Point(616, 9);
             lblNovaNyx.Name = "lblNovaNyx";
             lblNovaNyx.Size = new Size(217, 52);
             lblNovaNyx.TabIndex = 13;
@@ -193,7 +204,7 @@
             // PicNovaNyx
             // 
             PicNovaNyx.Image = Properties.Resources.WhatsApp_Image_2026_04_19_at_10_51_10_AM;
-            PicNovaNyx.Location = new Point(485, 67);
+            PicNovaNyx.Location = new Point(616, 67);
             PicNovaNyx.Name = "PicNovaNyx";
             PicNovaNyx.Size = new Size(214, 158);
             PicNovaNyx.TabIndex = 14;
@@ -212,7 +223,7 @@
             // 
             label1.AutoSize = true;
             label1.Font = new Font("Arial", 13.8F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label1.Location = new Point(26, 22);
+            label1.Location = new Point(143, 26);
             label1.Name = "label1";
             label1.Size = new Size(202, 27);
             label1.TabIndex = 16;
@@ -222,7 +233,7 @@
             // 
             label2.AutoSize = true;
             label2.Font = new Font("Arial", 13.8F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label2.Location = new Point(748, 22);
+            label2.Location = new Point(956, 26);
             label2.Name = "label2";
             label2.Size = new Size(223, 27);
             label2.TabIndex = 17;
@@ -248,13 +259,31 @@
             label4.TabIndex = 19;
             label4.Text = "Tabla De Simbolos";
             // 
+            // picLineas
+            // 
+            picLineas.Location = new Point(69, 67);
+            picLineas.Name = "picLineas";
+            picLineas.Size = new Size(68, 337);
+            picLineas.TabIndex = 20;
+            picLineas.TabStop = false;
+            // 
+            // picLinea2
+            // 
+            picLinea2.Location = new Point(876, 67);
+            picLinea2.Name = "picLinea2";
+            picLinea2.Size = new Size(74, 337);
+            picLinea2.TabIndex = 21;
+            picLinea2.TabStop = false;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.AliceBlue;
             CancelButton = btnCargarPrograma;
-            ClientSize = new Size(1215, 764);
+            ClientSize = new Size(1459, 764);
+            Controls.Add(picLinea2);
+            Controls.Add(picLineas);
             Controls.Add(label4);
             Controls.Add(label3);
             Controls.Add(label2);
@@ -276,6 +305,8 @@
             ((System.ComponentModel.ISupportInitialize)dgtTablaDeSimbolos).EndInit();
             ((System.ComponentModel.ISupportInitialize)dgtErrores).EndInit();
             ((System.ComponentModel.ISupportInitialize)PicNovaNyx).EndInit();
+            ((System.ComponentModel.ISupportInitialize)picLineas).EndInit();
+            ((System.ComponentModel.ISupportInitialize)picLinea2).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -302,5 +333,7 @@
         private Label label2;
         private Label label3;
         private Label label4;
+        private PictureBox picLineas;
+        private PictureBox picLinea2;
     }
 }
