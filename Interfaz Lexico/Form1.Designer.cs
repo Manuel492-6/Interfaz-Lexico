@@ -82,10 +82,13 @@
             // 
             dataGridViewCellStyle1.Alignment = DataGridViewContentAlignment.MiddleCenter;
             dgtTablaDeSimbolos.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle1;
+            dgtTablaDeSimbolos.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
             dgtTablaDeSimbolos.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgtTablaDeSimbolos.Columns.AddRange(new DataGridViewColumn[] { Identificador, Nombre, TipoDato, Valor });
+            dgtTablaDeSimbolos.GridColor = SystemColors.InactiveCaptionText;
             dgtTablaDeSimbolos.Location = new Point(26, 546);
             dgtTablaDeSimbolos.Name = "dgtTablaDeSimbolos";
+            dgtTablaDeSimbolos.RowHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
             dgtTablaDeSimbolos.RowHeadersWidth = 51;
             dgtTablaDeSimbolos.Size = new Size(552, 188);
             dgtTablaDeSimbolos.TabIndex = 7;
@@ -217,7 +220,7 @@
             lblNovaNyxVersion.Name = "lblNovaNyxVersion";
             lblNovaNyxVersion.Size = new Size(91, 20);
             lblNovaNyxVersion.TabIndex = 15;
-            lblNovaNyxVersion.Text = "Versión 1.4.2";
+            lblNovaNyxVersion.Text = "Versión 1.4.3";
             // 
             // label1
             // 
@@ -300,7 +303,7 @@
             Controls.Add(richProgramaFuente);
             Controls.Add(richArchivoDeTokens);
             Name = "Form1";
-            Text = "NovaNyx 1.4.2";
+            Text = "NovaNyx 1.4.3";
             Load += Form1_Load;
             ((System.ComponentModel.ISupportInitialize)dgtTablaDeSimbolos).EndInit();
             ((System.ComponentModel.ISupportInitialize)dgtErrores).EndInit();

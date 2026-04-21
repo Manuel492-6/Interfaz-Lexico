@@ -88,7 +88,10 @@ namespace Interfaz_Lexico
             bool Error = false;
 
             richArchivoDeTokens.Clear();
-
+            if (!(ListaDeIdentificadoresOrdenada.Vacia == true))
+            {
+                ListaDeIdentificadoresOrdenada.Vaciar();
+            }
 
             //Agrega cada palabra de la linea a la variable NuevoToken, separada por un espacio
             for (int j = 0; j < palabras.Length; j++)
@@ -152,7 +155,7 @@ namespace Interfaz_Lexico
                             {
                                 Debug.WriteLine("Misma longitud");
                                 Identificador nuevoIdentificador = new Identificador();
-                                nuevoIdentificador.NumeroDeIdentificador = j;
+                                nuevoIdentificador.NumeroDeIdentificador = ListaDeIdentificadoresOrdenada.Contar;
                                 nuevoIdentificador.Nombre = palabras[j];
                                 nuevoIdentificador.Valor = "Null";
                                 nuevoIdentificador.TipoDeDato = "Null";
@@ -226,7 +229,7 @@ namespace Interfaz_Lexico
 
 
                 // 1. RECOPILAR EL ALFABETO TEMPORALMENTE (Para saber de qué tamaño será la matriz)
-                //List<string> alfabetoTemporal = new List<string>();
+
                 Dictionary<string, string> mapaColumnas = new Dictionary<string, string>();
 
                 foreach (DataColumn col in tablaDB.Columns)
@@ -479,7 +482,6 @@ namespace Interfaz_Lexico
             MessageBox.Show("Archivo guardado correctamente.");
         }
 
-        // Método que dibuja los números en el PictureBox
         private void picLineas_Paint(object sender, PaintEventArgs e)
         {
             // 1. Calculamos cuál es la primera y última línea que el usuario tiene en pantalla
