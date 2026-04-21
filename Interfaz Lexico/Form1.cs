@@ -12,7 +12,6 @@ namespace Interfaz_Lexico
         string NombreArchivo2 = "..\\..\\..\\..\\ArchivosTexto\\Archivo2.txt";
         List<Identificador> ListaDeIdentificadores = new List<Identificador>();
         ClaseListaSimpleOrdenada<Identificador> ListaDeIdentificadoresOrdenada = new ClaseListaSimpleOrdenada<Identificador>();
-        private string ConexionBD = @"Server=DESKTOP-3G6AMVL\SQLEXPRESS; Database=NovaNyx; Integrated Security=True; TrustServerCertificate=True;";
         private string[,] matrizCompleta;
         private List<string> alfabetoTemporal = new List<string>();
 
