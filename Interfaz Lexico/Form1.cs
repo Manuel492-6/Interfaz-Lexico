@@ -11,6 +11,7 @@ namespace Interfaz_Lexico
         string NombreArchivo = "..\\..\\..\\..\\ArchivosTexto\\Archivo.txt";
         string NombreArchivo2 = "..\\..\\..\\..\\ArchivosTexto\\Archivo2.txt";
         List<Identificador> ListaDeIdentificadores = new List<Identificador>();
+        private string ConexionBD = @"Server=DESKTOP-3G6AMVL\SQLEXPRESS; Database=NovaNyx; Integrated Security=True; TrustServerCertificate=True;";
         ClaseListaSimpleOrdenada<Identificador> ListaDeIdentificadoresOrdenada = new ClaseListaSimpleOrdenada<Identificador>();
         private string[,] matrizCompleta;
         private List<string> alfabetoTemporal = new List<string>();
@@ -87,10 +88,7 @@ namespace Interfaz_Lexico
             bool Error = false;
 
             richArchivoDeTokens.Clear();
-            if (!(ListaDeIdentificadoresOrdenada.Vacia == true))
-            {
-                ListaDeIdentificadoresOrdenada.Vaciar();
-            }
+
 
             //Agrega cada palabra de la linea a la variable NuevoToken, separada por un espacio
             for (int j = 0; j < palabras.Length; j++)
@@ -154,25 +152,47 @@ namespace Interfaz_Lexico
                             {
                                 Debug.WriteLine("Misma longitud");
                                 Identificador nuevoIdentificador = new Identificador();
-                                nuevoIdentificador.NumeroDeIdentificador = ListaDeIdentificadoresOrdenada.Contar;
                                 nuevoIdentificador.Nombre = palabras[j];
                                 nuevoIdentificador.Valor = "Null";
                                 nuevoIdentificador.TipoDeDato = "Null";
-                                if (ListaDeIdentificadoresOrdenada.Vacia == true)
+
+                                Identificador existente = null;
+
+                                // Buscamos si ya existe en la lista iterando sobre ella
+                                if (!ListaDeIdentificadoresOrdenada.Vacia)
                                 {
-                                    ListaDeIdentificadoresOrdenada.Insertar(nuevoIdentificador);
+                                    foreach (var item in ListaDeIdentificadoresOrdenada)
+                                    {
+                                        if (item.Nombre == nuevoIdentificador.Nombre)
+                                        {
+                                            existente = item;
+                                            break;
+                                        }
+                                    }
                                 }
 
-                                if (ListaDeIdentificadoresOrdenada.Buscar(nuevoIdentificador) == false)
+                                int idAUsar;
+                                if (existente == null)
                                 {
+                                    // Es nuevo, le asignamos un Identificador UNICO
+                                    idAUsar = ListaDeIdentificadoresOrdenada.Contar + 1;
+                                    nuevoIdentificador.NumeroDeIdentificador = idAUsar;
                                     ListaDeIdentificadoresOrdenada.Insertar(nuevoIdentificador);
                                 }
                                 else
                                 {
-                                    Debug.WriteLine($"El identificador '{palabras[j]}' ya existe en la tabla de símbolos.");
+                                    // Ya existe, obtenemos su ID previo
+                                    idAUsar = existente.NumeroDeIdentificador;
+                                    Debug.WriteLine($"El identificador '{palabras[j]}' ya existe en la tabla de símbolos con ID {idAUsar}.");
                                 }
+
+                                // Concatenamos el número de identificador al token (ej. IDV1, IDV2...)
+                                NuevoToken += matrizCompleta[SiguienteEstado, matrizCompleta.GetLength(1) - 1] + idAUsar.ToString() + " ";
                             }
-                            NuevoToken += matrizCompleta[SiguienteEstado, matrizCompleta.GetLength(1) - 1] + " ";
+                            else
+                            {
+                                NuevoToken += matrizCompleta[SiguienteEstado, matrizCompleta.GetLength(1) - 1] + " ";
+                            }
                         }
                         else
                         {
@@ -195,7 +215,8 @@ namespace Interfaz_Lexico
             dgtTablaDeSimbolos.Rows.Clear();
             foreach (var identificador in ListaDeIdentificadoresOrdenada)
             {
-                dgtTablaDeSimbolos.Rows.Add(identificador.NumeroDeIdentificador + 1, identificador.Nombre, identificador.TipoDeDato, identificador.Valor);
+                // Mostramos directamente el NumeroDeIdentificador que calculamos (ya empieza desde 1)
+                dgtTablaDeSimbolos.Rows.Add(identificador.NumeroDeIdentificador, identificador.Nombre, identificador.TipoDeDato, identificador.Valor);
             }
 
             //Agrega el token de la linea a la lista de tokens, eliminando el espacio al final
@@ -228,7 +249,7 @@ namespace Interfaz_Lexico
 
 
                 // 1. RECOPILAR EL ALFABETO TEMPORALMENTE (Para saber de qué tamaño será la matriz)
-
+                //List<string> alfabetoTemporal = new List<string>();
                 Dictionary<string, string> mapaColumnas = new Dictionary<string, string>();
 
                 foreach (DataColumn col in tablaDB.Columns)
@@ -481,6 +502,7 @@ namespace Interfaz_Lexico
             MessageBox.Show("Archivo guardado correctamente.");
         }
 
+        // Método que dibuja los números en el PictureBox
         private void picLineas_Paint(object sender, PaintEventArgs e)
         {
             // 1. Calculamos cuál es la primera y última línea que el usuario tiene en pantalla
