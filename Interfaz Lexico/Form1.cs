@@ -1,19 +1,22 @@
 using Microsoft.Data.SqlClient;
+using Microsoft.VisualBasic.ApplicationServices;
+using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.Drawing.Drawing2D;
-using System.Windows.Forms;
-using System.Collections.Generic;
-using System;
 using System.IO;
+using System.Windows.Forms;
 
 namespace Interfaz_Lexico
 {
     public partial class Form1 : Form
     {
-        string NombreArchivo = "..\\..\\..\\..\\ArchivosTexto\\Archivo.txt";
-        string NombreArchivo2 = "..\\..\\..\\..\\ArchivosTexto\\Archivo2.txt";
+        string NombreArchivo = "..\\..\\..\\..\\ArchivosTexto";
+        string NombreArchivoTokens = "..\\..\\..\\..\\ArchivoTokens";
         List<Identificador> ListaDeIdentificadores = new List<Identificador>();
+        int ContadorErrores = 0;
+
 
         // Cambia aquí los datos a los reales de tu gestor
         private string ConexionBD = @"Server=DESKTOP-3G6AMVL\SQLEXPRESS; Database=NovaNyx; Integrated Security=True; TrustServerCertificate=True;";
@@ -340,6 +343,7 @@ namespace Interfaz_Lexico
 
             // 5. Totalizador de Errores al final de la tabla
             int conteoErrores = dgtErrores.Rows.Count;
+            ContadorErrores = conteoErrores;
             dgtErrores.Rows.Add("Total de Errores", conteoErrores);
         }
 
@@ -370,11 +374,29 @@ namespace Interfaz_Lexico
 
         private void btnGuardarPrograma_Click(object sender, EventArgs e)
         {
-            Archivo<string> archivoTexto = new Archivo<string>(NombreArchivo);
+            string ArchivoGuardar = "";
+
+            OpenFileDialog saveFileDialog = new OpenFileDialog();
+            saveFileDialog.InitialDirectory = NombreArchivo;
+            saveFileDialog.Filter = "Archivos de texto (*.txt)|*.txt|Todos los archivos (*.*)|*.*";
+            saveFileDialog.Title = "Seleccionar ubicación para guardar el programa fuente";
+            saveFileDialog.CheckFileExists = false;
+            if (saveFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                ArchivoGuardar = saveFileDialog.FileName;
+            }
+            else
+            {
+                MessageBox.Show("No se seleccionó ningún archivo. Operación cancelada.");
+                return;
+            }
+
+            Archivo<string> archivoTexto = new Archivo<string>(ArchivoGuardar);
 
             if (File.Exists(archivoTexto.NombreArchivo))
             {
-                archivoTexto.EliminarArchivo();
+                MessageBox.Show("El archivo ya existe. ");
+                return;
             }
 
             archivoTexto.HacerModoEscritura();
@@ -390,9 +412,26 @@ namespace Interfaz_Lexico
 
         private void btnCargarPrograma_Click(object sender, EventArgs e)
         {
-            Archivo<string> archivoTexto = new Archivo<string>(NombreArchivo);
-            archivoTexto.HacerModoLectura();
+            string NombreArchivoCargar = "";
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.InitialDirectory = NombreArchivo;
+            openFileDialog.Filter = "Archivos de texto (*.txt)|*.txt|Todos los archivos (*.*)|*.*";
+            openFileDialog.Title = "Seleccionar programa fuente";
+            openFileDialog.Multiselect = false;
+            openFileDialog.CheckFileExists = true;
+            if (openFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                NombreArchivoCargar = openFileDialog.FileName;
+            }
+            else
+            {
+                MessageBox.Show("No se seleccionó ningún archivo. Operación cancelada.");
+                return;
+            }
 
+            Archivo<string> archivoTexto = new Archivo<string>(NombreArchivoCargar);
+            archivoTexto.HacerModoLectura();
+            
             richProgramaFuente.Clear();
             dgtErrores.Rows.Clear();
             dgtTablaDeSimbolos.Rows.Clear();
@@ -421,7 +460,33 @@ namespace Interfaz_Lexico
 
         private void btnGuardarArchivo_Click(object sender, EventArgs e)
         {
-            Archivo<string> archivoTexto = new Archivo<string>(NombreArchivo2);
+
+            string ArchivoTokensGuardar = "";
+
+            if (ContadorErrores > 0)
+            {
+                MessageBox.Show("No se puede guardar el archivo debido a errores.");
+                return;
+            }
+
+            OpenFileDialog saveFileDialog = new OpenFileDialog();
+            saveFileDialog.InitialDirectory = "C:\\Users\\DELL\\Desktop\\Interfaz Lexico\\ArchivoTokens";
+            saveFileDialog.Filter = "Archivos de texto (*.txt)|*.txt|Todos los archivos (*.*)|*.*";
+            saveFileDialog.Title = "Seleccionar ubicación para guardar el archivo de tokens";
+            saveFileDialog.Multiselect = false;
+            saveFileDialog.CheckFileExists = false;
+
+            if (saveFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                ArchivoTokensGuardar = saveFileDialog.FileName;
+            }
+            else
+            {
+                MessageBox.Show("No se seleccionó ningún archivo. Operación cancelada.");
+                return;
+            }
+
+            Archivo<string> archivoTexto = new Archivo<string>(ArchivoTokensGuardar);
 
             if (File.Exists(archivoTexto.NombreArchivo))
             {
