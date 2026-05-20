@@ -2,15 +2,8 @@
 {
     partial class Form1
     {
-        /// <summary>
-        ///  Required designer variable.
-        /// </summary>
         private System.ComponentModel.IContainer components = null;
 
-        /// <summary>
-        ///  Clean up any resources being used.
-        /// </summary>
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
@@ -22,10 +15,6 @@
 
         #region Windows Form Designer generated code
 
-        /// <summary>
-        ///  Required method for Designer support - do not modify
-        ///  the contents of this method with the code editor.
-        /// </summary>
         private void InitializeComponent()
         {
             DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
@@ -44,6 +33,7 @@
             btnCargarPrograma = new Button();
             btnEditarPrograma = new Button();
             btnGuardarArchivo = new Button();
+            btnAnalizar = new Button();
             lblNovaNyx = new Label();
             PicNovaNyx = new PictureBox();
             lblNovaNyxVersion = new Label();
@@ -53,6 +43,7 @@
             label4 = new Label();
             picLineas = new PictureBox();
             picLinea2 = new PictureBox();
+            label5 = new Label();
             ((System.ComponentModel.ISupportInitialize)dgtTablaDeSimbolos).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dgtErrores).BeginInit();
             ((System.ComponentModel.ISupportInitialize)PicNovaNyx).BeginInit();
@@ -193,14 +184,24 @@
             btnGuardarArchivo.UseVisualStyleBackColor = true;
             btnGuardarArchivo.Click += btnGuardarArchivo_Click;
             // 
+            // btnAnalizar
+            // 
+            btnAnalizar.Location = new Point(593, 432);
+            btnAnalizar.Name = "btnAnalizar";
+            btnAnalizar.Size = new Size(136, 48);
+            btnAnalizar.TabIndex = 22;
+            btnAnalizar.Text = "Analizar Todo";
+            btnAnalizar.UseVisualStyleBackColor = true;
+            btnAnalizar.Click += btnAnalizar_Click;
+            // 
             // lblNovaNyx
             // 
             lblNovaNyx.AutoSize = true;
-            lblNovaNyx.Font = new Font("Stencil", 25.8000011F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lblNovaNyx.Font = new Font("Stencil", 25.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
             lblNovaNyx.ForeColor = SystemColors.ActiveCaptionText;
             lblNovaNyx.Location = new Point(616, 9);
             lblNovaNyx.Name = "lblNovaNyx";
-            lblNovaNyx.Size = new Size(217, 52);
+            lblNovaNyx.Size = new Size(212, 51);
             lblNovaNyx.TabIndex = 13;
             lblNovaNyx.Text = "NovaNyx";
             // 
@@ -210,6 +211,7 @@
             PicNovaNyx.Location = new Point(616, 67);
             PicNovaNyx.Name = "PicNovaNyx";
             PicNovaNyx.Size = new Size(214, 158);
+            PicNovaNyx.SizeMode = PictureBoxSizeMode.StretchImage;
             PicNovaNyx.TabIndex = 14;
             PicNovaNyx.TabStop = false;
             // 
@@ -278,6 +280,15 @@
             picLinea2.TabIndex = 21;
             picLinea2.TabStop = false;
             // 
+            // label5
+            // 
+            label5.AutoSize = true;
+            label5.Location = new Point(627, 244);
+            label5.Name = "label5";
+            label5.Size = new Size(227, 140);
+            label5.TabIndex = 23;
+            label5.Text = "Integrantes\r\n\r\nVictor Manuel Martinez Sifuentes\r\n\r\nYadhira Luna Carrillo\r\n\r\nChristian Medina Cital\r\n";
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
@@ -285,6 +296,7 @@
             BackColor = Color.AliceBlue;
             CancelButton = btnCargarPrograma;
             ClientSize = new Size(1459, 764);
+            Controls.Add(label5);
             Controls.Add(picLinea2);
             Controls.Add(picLineas);
             Controls.Add(label4);
@@ -298,6 +310,7 @@
             Controls.Add(btnEditarPrograma);
             Controls.Add(btnCargarPrograma);
             Controls.Add(btnGuardarPrograma);
+            Controls.Add(btnAnalizar);
             Controls.Add(dgtErrores);
             Controls.Add(dgtTablaDeSimbolos);
             Controls.Add(richProgramaFuente);
@@ -312,31 +325,35 @@
             ((System.ComponentModel.ISupportInitialize)picLinea2).EndInit();
             ResumeLayout(false);
             PerformLayout();
+
         }
 
         #endregion
-        private RichTextBox richArchivoDeTokens;
-        private RichTextBox richProgramaFuente;
-        private DataGridView dgtTablaDeSimbolos;
-        private DataGridViewTextBoxColumn Identificador;
-        private DataGridViewTextBoxColumn Nombre;
-        private DataGridViewTextBoxColumn TipoDato;
-        private DataGridViewTextBoxColumn Valor;
-        private DataGridView dgtErrores;
-        private DataGridViewTextBoxColumn Linea;
-        private DataGridViewTextBoxColumn Error;
-        private Button btnGuardarPrograma;
-        private Button btnCargarPrograma;
-        private Button btnEditarPrograma;
-        private Button btnGuardarArchivo;
-        private Label lblNovaNyx;
-        private PictureBox PicNovaNyx;
-        private Label lblNovaNyxVersion;
-        private Label label1;
-        private Label label2;
-        private Label label3;
-        private Label label4;
-        private PictureBox picLineas;
-        private PictureBox picLinea2;
+
+        private System.Windows.Forms.RichTextBox richArchivoDeTokens;
+        private System.Windows.Forms.RichTextBox richProgramaFuente;
+        private System.Windows.Forms.DataGridView dgtTablaDeSimbolos;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Identificador;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Nombre;
+        private System.Windows.Forms.DataGridViewTextBoxColumn TipoDato;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Valor;
+        private System.Windows.Forms.DataGridView dgtErrores;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Linea;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Error;
+        private System.Windows.Forms.Button btnGuardarPrograma;
+        private System.Windows.Forms.Button btnCargarPrograma;
+        private System.Windows.Forms.Button btnEditarPrograma;
+        private System.Windows.Forms.Button btnGuardarArchivo;
+        private System.Windows.Forms.Button btnAnalizar; // Instancia Nuevo botón
+        private System.Windows.Forms.Label lblNovaNyx;
+        private System.Windows.Forms.PictureBox PicNovaNyx;
+        private System.Windows.Forms.Label lblNovaNyxVersion;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.PictureBox picLineas;
+        private System.Windows.Forms.PictureBox picLinea2;
+        private Label label5;
     }
 }

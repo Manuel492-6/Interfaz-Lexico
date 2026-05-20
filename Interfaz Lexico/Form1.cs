@@ -3,6 +3,9 @@ using System.Data;
 using System.Diagnostics;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
+using System.Collections.Generic;
+using System;
+using System.IO;
 
 namespace Interfaz_Lexico
 {
@@ -11,7 +14,10 @@ namespace Interfaz_Lexico
         string NombreArchivo = "..\\..\\..\\..\\ArchivosTexto\\Archivo.txt";
         string NombreArchivo2 = "..\\..\\..\\..\\ArchivosTexto\\Archivo2.txt";
         List<Identificador> ListaDeIdentificadores = new List<Identificador>();
+
+        // Cambia aquí los datos a los reales de tu gestor
         private string ConexionBD = @"Server=DESKTOP-3G6AMVL\SQLEXPRESS; Database=NovaNyx; Integrated Security=True; TrustServerCertificate=True;";
+
         ClaseListaSimpleOrdenada<Identificador> ListaDeIdentificadoresOrdenada = new ClaseListaSimpleOrdenada<Identificador>();
         private string[,] matrizCompleta;
         private List<string> alfabetoTemporal = new List<string>();
@@ -21,10 +27,10 @@ namespace Interfaz_Lexico
             {"Error identificador no valido","__EIDNV__" },
             {"Error operador aritmetico no valido","__EARONV__" },
             {"Error operador logico no valido","__ELOPNV__" },
-            { "Error operador relacional no valido","__EREONV__"},
+            {"Error operador relacional no valido","__EREONV__"},
             {"Error operador de asignacion no valido","__EALONV__" },
-            { "Error constante numerica no valida","__ENUCNV__"},
-            { "Error cadena no valida","__ESTRNV__"},
+            {"Error constante numerica no valida","__ENUCNV__"},
+            {"Error cadena no valida","__ESTRNV__"},
             {"Error comentario no valido","__ECOMNV__"},
             {"Error caracter especial no valido","__ESPCNV__"},
             {"Error palabra reservada no valida","__ERWNV__"},
@@ -56,16 +62,14 @@ namespace Interfaz_Lexico
         {
             try
             {
-                // Se usan los métodos combinados para detectar la estructura y cargar los datos
                 CargarEstructuraYDatosDesdeSQL();
                 ConfigurarDataGridView();
                 richArchivoDeTokens.ReadOnly = true;
 
-                // Conectamos el evento Paint de nuestro PictureBox a nuestro método
                 picLineas.Paint += picLineas_Paint;
                 picLinea2.Paint += picLinea2_Paint;
 
-                // Conectamos el Scroll del RichTextBox para que los números bajen al usar la rueda del ratón
+                // Solo para redibujar visualmente cuando se hace scroll
                 richProgramaFuente.VScroll += (s, ev) => picLineas.Invalidate();
                 richProgramaFuente.HScroll += (s, ev) => picLineas.Invalidate();
 
@@ -77,20 +81,13 @@ namespace Interfaz_Lexico
                 MessageBox.Show("Error al conectar o procesar la tabla:\n\n" + ex.Message);
             }
         }
+
         private void VerificarToken(int i, List<string> Tokens)
         {
-            //Almacena Cada token de cada linea
             string NuevoToken = "";
-
-            //Separa las palabras de cada linea por espacios y las agrega a la lista de tokens
             string[] palabras = richProgramaFuente.Lines[i].Split(" ", StringSplitOptions.RemoveEmptyEntries);
-
             bool Error = false;
 
-            richArchivoDeTokens.Clear();
-
-
-            //Agrega cada palabra de la linea a la variable NuevoToken, separada por un espacio
             for (int j = 0; j < palabras.Length; j++)
             {
                 int EstadoActual = 1;
@@ -101,27 +98,23 @@ namespace Interfaz_Lexico
                 foreach (char simbolo in palabras[j])
                 {
                     contadorChar++;
-
                     columna = alfabetoTemporal.IndexOf(simbolo.ToString());
-
 
                     if (columna == -1)
                     {
                         NuevoToken += "__ERROR__ " + " ";
-                        Debug.WriteLine($"Simbolo: {simbolo} no reconocido en el alfabeto.");
                         AgregarErrores("__ERROR__", i);
                         Error = true;
                         continue;
                     }
 
                     SiguienteEstado = matrizCompleta[EstadoActual, columna + 1] == "Error" ? -1 : int.Parse(matrizCompleta[EstadoActual, columna + 1]);
-                    Debug.WriteLine($"Simbolo: {simbolo} | Estado Actual: {EstadoActual} | Columna: {columna + 1} | Siguiente Estado: {SiguienteEstado}");
 
                     if (SiguienteEstado == -1)
                     {
-                        //Error porque no se acepta el token
-                        NuevoToken += Errores.ContainsKey(matrizCompleta[EstadoActual, matrizCompleta.GetLength(1) - 1]) ? Errores[matrizCompleta[EstadoActual, matrizCompleta.GetLength(1) - 1]] : "__ERROR__";
-                        AgregarErrores(Errores[matrizCompleta[EstadoActual, matrizCompleta.GetLength(1) - 1]], i);
+                        string eKey = matrizCompleta[EstadoActual, matrizCompleta.GetLength(1) - 1];
+                        NuevoToken += Errores.ContainsKey(eKey) ? Errores[eKey] : "__ERROR__";
+                        AgregarErrores(Errores.ContainsKey(eKey) ? Errores[eKey] : "__ERROR__", i);
                         Error = true;
                         continue;
                     }
@@ -131,26 +124,21 @@ namespace Interfaz_Lexico
                 if (!Error)
                 {
                     columna = alfabetoTemporal.IndexOf("EOC");
-
                     SiguienteEstado = int.TryParse(matrizCompleta[EstadoActual, columna + 1], out int resultado) ? resultado : -1;
 
                     if (SiguienteEstado == -1)
                     {
-                        //Error porque no se acepta el token
-                        Debug.WriteLine($"Simbolo: EOC | Estado Actual: {EstadoActual} | Columna: {columna + 1} | Siguiente Estado: {SiguienteEstado}");
-                        Debug.WriteLine(matrizCompleta[EstadoActual, matrizCompleta.GetLength(1) - 1].ToString());
-                        NuevoToken += Errores[matrizCompleta[EstadoActual, matrizCompleta.GetLength(1) - 1]] + " ";
-                        AgregarErrores(Errores[matrizCompleta[EstadoActual, matrizCompleta.GetLength(1) - 1]], i);
+                        string eKey = matrizCompleta[EstadoActual, matrizCompleta.GetLength(1) - 1];
+                        NuevoToken += Errores.ContainsKey(eKey) ? Errores[eKey] : "__ERROR__";
+                        AgregarErrores(Errores.ContainsKey(eKey) ? Errores[eKey] : "__ERROR__", i);
                         continue;
                     }
                     else
                     {
                         if (matrizCompleta[SiguienteEstado, matrizCompleta.GetLength(1) - 1] == "IDV")
                         {
-
                             if (contadorChar == palabras[j].Length)
                             {
-                                Debug.WriteLine("Misma longitud");
                                 Identificador nuevoIdentificador = new Identificador();
                                 nuevoIdentificador.Nombre = palabras[j];
                                 nuevoIdentificador.Valor = "Null";
@@ -158,7 +146,6 @@ namespace Interfaz_Lexico
 
                                 Identificador existente = null;
 
-                                // Buscamos si ya existe en la lista iterando sobre ella
                                 if (!ListaDeIdentificadoresOrdenada.Vacia)
                                 {
                                     foreach (var item in ListaDeIdentificadoresOrdenada)
@@ -174,19 +161,15 @@ namespace Interfaz_Lexico
                                 int idAUsar;
                                 if (existente == null)
                                 {
-                                    // Es nuevo, le asignamos un Identificador UNICO
                                     idAUsar = ListaDeIdentificadoresOrdenada.Contar + 1;
                                     nuevoIdentificador.NumeroDeIdentificador = idAUsar;
                                     ListaDeIdentificadoresOrdenada.Insertar(nuevoIdentificador);
                                 }
                                 else
                                 {
-                                    // Ya existe, obtenemos su ID previo
                                     idAUsar = existente.NumeroDeIdentificador;
-                                    Debug.WriteLine($"El identificador '{palabras[j]}' ya existe en la tabla de símbolos con ID {idAUsar}.");
                                 }
 
-                                // Concatenamos el número de identificador al token (ej. IDV1, IDV2...)
                                 NuevoToken += matrizCompleta[SiguienteEstado, matrizCompleta.GetLength(1) - 1] + idAUsar.ToString() + " ";
                             }
                             else
@@ -196,40 +179,22 @@ namespace Interfaz_Lexico
                         }
                         else
                         {
-                            //Token aceptado
                             NuevoToken += matrizCompleta[SiguienteEstado, matrizCompleta.GetLength(1) - 1] + " ";
                         }
-
-
-
                     }
-
-
                 }
                 Error = false;
-                Debug.WriteLine("---------------------------------------");
-
             }
-
 
             dgtTablaDeSimbolos.Rows.Clear();
             foreach (var identificador in ListaDeIdentificadoresOrdenada)
             {
-                // Mostramos directamente el NumeroDeIdentificador que calculamos (ya empieza desde 1)
                 dgtTablaDeSimbolos.Rows.Add(identificador.NumeroDeIdentificador, identificador.Nombre, identificador.TipoDeDato, identificador.Valor);
             }
 
-            //Agrega el token de la linea a la lista de tokens, eliminando el espacio al final
             Tokens.Add(NuevoToken.TrimEnd());
-
-
-            //Agrega los token al nuevo archivo de tokens
-            richArchivoDeTokens.Lines = Tokens.ToArray();
             palabras = null;
         }
-
-
-
 
         private void CargarEstructuraYDatosDesdeSQL()
         {
@@ -237,7 +202,7 @@ namespace Interfaz_Lexico
             {
                 conn.Open();
 
-                string query = "SELECT * FROM MatrizTransicion"; // Mejor ordenamiento seguro
+                string query = "SELECT * FROM MatrizTransicion";
                 SqlCommand cmd = new SqlCommand(query, conn);
 
                 SqlDataAdapter adapter = new SqlDataAdapter(cmd);
@@ -247,9 +212,6 @@ namespace Interfaz_Lexico
                 if (tablaDB.Rows.Count == 0)
                     throw new Exception("La tabla MatrizTransicion está vacía.");
 
-
-                // 1. RECOPILAR EL ALFABETO TEMPORALMENTE (Para saber de qué tamaño será la matriz)
-                //List<string> alfabetoTemporal = new List<string>();
                 Dictionary<string, string> mapaColumnas = new Dictionary<string, string>();
 
                 foreach (DataColumn col in tablaDB.Columns)
@@ -257,7 +219,6 @@ namespace Interfaz_Lexico
                     string nombreReal = col.ColumnName;
                     if (nombreReal != tablaDB.Columns[0].ColumnName && nombreReal.ToUpper() != "ACEPTA")
                     {
-
                         string nombreLimpio = nombreReal;
                         if (nombreReal.Length == 2 && nombreReal.EndsWith("1"))
                         {
@@ -268,7 +229,6 @@ namespace Interfaz_Lexico
                     }
                 }
 
-                // 2. DIMENSIONAR LA MATRIZ ÚNICA
                 int maxEstado = 0;
                 foreach (DataRow row in tablaDB.Rows)
                 {
@@ -276,17 +236,13 @@ namespace Interfaz_Lexico
                     {
                         maxEstado = id;
                     }
-
-
                 }
 
-
-                int totalFilas = maxEstado + 1; // +1 para la fila de ENCABEZADOS (Fila 0)
-                int totalColumnas = alfabetoTemporal.Count + 2; // +1 para columna "Estado" y +1 para columna "ACEPTA"
+                int totalFilas = maxEstado + 1;
+                int totalColumnas = alfabetoTemporal.Count + 2;
 
                 matrizCompleta = new string[totalFilas, totalColumnas];
 
-                // 3. LLENAR LA FILA CERO (0) CON LOS ENCABEZADOS
                 matrizCompleta[0, 0] = "Estado";
                 for (int c = 0; c < alfabetoTemporal.Count; c++)
                 {
@@ -294,18 +250,16 @@ namespace Interfaz_Lexico
                 }
                 matrizCompleta[0, totalColumnas - 1] = "ACEPTA";
 
-                // 4. INICIALIZAR EL RESTO DE LA MATRIZ POR DEFECTO (Para evitar nulos)
                 for (int f = 1; f < totalFilas; f++)
                 {
-                    matrizCompleta[f, 0] = f.ToString(); // Guardamos el Estado en la col 0
+                    matrizCompleta[f, 0] = f.ToString();
                     for (int c = 1; c < totalColumnas - 1; c++)
                     {
-                        matrizCompleta[f, c] = "Error"; // Transición por defecto
+                        matrizCompleta[f, c] = "Error";
                     }
-                    matrizCompleta[f, totalColumnas - 1] = "No valido"; // Acepta por defecto
+                    matrizCompleta[f, totalColumnas - 1] = "No valido";
                 }
 
-                // 5. VOLCAR LOS DATOS REALES DE LA BASE DE DATOS A LA MATRIZ
                 foreach (DataRow row in tablaDB.Rows)
                 {
                     if (!int.TryParse(row[0].ToString(), out int idEstadoActual))
@@ -313,14 +267,12 @@ namespace Interfaz_Lexico
                         continue;
                     }
 
-                    // La fila en la matriz será el (Estado + 1) porque la fila 0 son los encabezados
                     int filaMatriz = idEstadoActual;
 
-                    // Llenar transiciones
                     for (int c = 0; c < alfabetoTemporal.Count; c++)
                     {
                         string simbolo = alfabetoTemporal[c];
-                        string nombreColDB = mapaColumnas[simbolo]; // Buscamos cómo se llama en SQL (ej: "a1")
+                        string nombreColDB = mapaColumnas[simbolo];
 
                         object valorCelda = row[nombreColDB];
 
@@ -334,69 +286,73 @@ namespace Interfaz_Lexico
                         }
                     }
 
-                    // Llenar columna ACEPTA
                     matrizCompleta[filaMatriz, totalColumnas - 1] = row["ACEPTA"]?.ToString() ?? "No valido";
                 }
             }
         }
 
-
-
+        // Se elimina la ejecución léxica en tiempo real para usar el botón "Analizar Todo"
         private void richProgramaFuente_TextChanged(object sender, EventArgs e)
         {
-            picLineas.Invalidate();
+            picLineas.Invalidate(); // Solo se actualizan las líneas del editor visualmente
+        }
 
-            //Verifica el numero de lineas
-            int NumeroDeLineas = richProgramaFuente.Lines.Count();
-
-            //Crea una lista de tokens que se llenara con los tokens de cada linea
-            List<string> Tokens = new List<string>();
-
-            Tokens.Clear();
-            if (ListaDeIdentificadoresOrdenada.Vacia == false)
-            {
-                ListaDeIdentificadoresOrdenada.Vaciar();
-            }
-
+        // =====================================================================
+        // BOTÓN PRINCIPAL DE ANÁLISIS (LÉXICO Y SINTÁCTICO)
+        // =====================================================================
+        private void btnAnalizar_Click(object sender, EventArgs e)
+        {
+            // 1. Limpieza General
+            richArchivoDeTokens.Clear();
             dgtErrores.Rows.Clear();
+            if (!ListaDeIdentificadoresOrdenada.Vacia) ListaDeIdentificadoresOrdenada.Vaciar();
 
-            //Recorre cada linea del programa fuente, separa las palabras por espacios y las agrega a la lista de tokens
+            List<string> Tokens = new List<string>();
+            int NumeroDeLineas = richProgramaFuente.Lines.Length;
+
+            // 2. Ejecutar Analizador LÉXICO Línea por Línea
             for (int i = 0; i < NumeroDeLineas; i++)
             {
-                Debug.WriteLine($"Numero de filas {dgtErrores.Rows.Count}");
-
-                if (dgtErrores.Rows.Count > 0)
-                {
-                    dgtErrores.Rows.RemoveAt(dgtErrores.Rows.Count - 1);
-                }
                 VerificarToken(i, Tokens);
+            }
+            // Agregar tokens al UI
+            richArchivoDeTokens.Lines = Tokens.ToArray();
 
+            // 3. Preparar los tokens generados para el Analizador SINTÁCTICO
+            List<TokenSintactico> listaTokensSintacticos = new List<TokenSintactico>();
+            for (int i = 0; i < richArchivoDeTokens.Lines.Length; i++)
+            {
+                string lineaTokens = richArchivoDeTokens.Lines[i];
+                string[] partes = lineaTokens.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
-                int conteoErrores = (dgtErrores.Rows.Count == 0) ? 0 : dgtErrores.Rows.Count;
+                foreach (string parte in partes)
+                {
+                    // Evitamos mandar los errores léxicos al sintáctico para no crear cascadas de fallos
+                    if (parte == "__ERROR__" || parte.StartsWith("Error")) continue;
 
-                dgtErrores.Rows.Add("Total de Errores", conteoErrores);
+                    listaTokensSintacticos.Add(new TokenSintactico() { Tipo = parte, Linea = i + 1 });
+                }
             }
 
+            // 4. Ejecutar Analizador SINTÁCTICO
+            AnalizadorSintactico sintactico = new AnalizadorSintactico(listaTokensSintacticos, dgtErrores);
+            sintactico.ParsearPrograma();
+
+            // 5. Totalizador de Errores al final de la tabla
+            int conteoErrores = dgtErrores.Rows.Count;
+            dgtErrores.Rows.Add("Total de Errores", conteoErrores);
         }
 
         private void AgregarErrores(string error, int linea)
         {
             error = Errores2.ContainsKey(error) ? Errores2[error] : "Error desconocido";
-
             dgtErrores.Rows.Add(linea + 1, error);
 
-
-
-            foreach (DataGridViewRow row in dgtErrores.Rows)
+            int lastIndex = dgtErrores.Rows.Count - 1;
+            if (lastIndex >= 0)
             {
-                if (row.Cells[0].Value != null)
-                {
-                    row.DefaultCellStyle.BackColor = Color.Red;
-                }
+                dgtErrores.Rows[lastIndex].DefaultCellStyle.BackColor = System.Drawing.Color.Red;
             }
-
-
-
         }
 
         private void ConfigurarDataGridView()
@@ -410,16 +366,11 @@ namespace Interfaz_Lexico
             dgtTablaDeSimbolos.AllowUserToDeleteRows = false;
             dgtTablaDeSimbolos.ReadOnly = true;
             dgtTablaDeSimbolos.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-
-
-
         }
 
         private void btnGuardarPrograma_Click(object sender, EventArgs e)
         {
-
             Archivo<string> archivoTexto = new Archivo<string>(NombreArchivo);
-
 
             if (File.Exists(archivoTexto.NombreArchivo))
             {
@@ -440,37 +391,25 @@ namespace Interfaz_Lexico
         private void btnCargarPrograma_Click(object sender, EventArgs e)
         {
             Archivo<string> archivoTexto = new Archivo<string>(NombreArchivo);
-
             archivoTexto.HacerModoLectura();
-
 
             richProgramaFuente.Clear();
             dgtErrores.Rows.Clear();
             dgtTablaDeSimbolos.Rows.Clear();
+            richArchivoDeTokens.Clear();
 
-            // Leemos hasta que se acabe el archivo
             while (!archivoTexto.FinArchivo)
             {
                 string lineaLeida = archivoTexto.LeerObjeto();
-
                 if (lineaLeida != null)
                 {
-                    // Agregamos la línea al RichTextBox y damos un salto de línea
                     richProgramaFuente.AppendText(lineaLeida + Environment.NewLine);
                 }
             }
 
             archivoTexto.CerrarArchivo();
-
             richProgramaFuente.ReadOnly = true;
             richProgramaFuente.Enabled = false;
-
-            richProgramaFuente.HandleCreated += (s, ev) =>
-            {
-                // Forzamos el evento TextChanged para procesar el programa fuente cargado
-                richProgramaFuente_TextChanged(s, EventArgs.Empty);
-            };
-            richProgramaFuente.AppendText(""); // Esto disparará el evento TextChanged
         }
 
         private void btnEditarPrograma_Click(object sender, EventArgs e)
@@ -482,9 +421,7 @@ namespace Interfaz_Lexico
 
         private void btnGuardarArchivo_Click(object sender, EventArgs e)
         {
-
             Archivo<string> archivoTexto = new Archivo<string>(NombreArchivo2);
-
 
             if (File.Exists(archivoTexto.NombreArchivo))
             {
@@ -502,61 +439,44 @@ namespace Interfaz_Lexico
             MessageBox.Show("Archivo guardado correctamente.");
         }
 
-        // Método que dibuja los números en el PictureBox
         private void picLineas_Paint(object sender, PaintEventArgs e)
         {
-            // 1. Calculamos cuál es la primera y última línea que el usuario tiene en pantalla
-            int primerCaracterVisible = richProgramaFuente.GetCharIndexFromPosition(new Point(0, 0));
+            int primerCaracterVisible = richProgramaFuente.GetCharIndexFromPosition(new System.Drawing.Point(0, 0));
             int primeraLineaVisible = richProgramaFuente.GetLineFromCharIndex(primerCaracterVisible);
 
-            int ultimoCaracterVisible = richProgramaFuente.GetCharIndexFromPosition(new Point(0, richProgramaFuente.Height));
+            int ultimoCaracterVisible = richProgramaFuente.GetCharIndexFromPosition(new System.Drawing.Point(0, richProgramaFuente.Height));
             int ultimaLineaVisible = richProgramaFuente.GetLineFromCharIndex(ultimoCaracterVisible);
 
-            // 2. Elegimos la fuente y el color de los números (Usa la misma fuente que tu código)
-            Font fuente = richProgramaFuente.Font;
-            Brush brocha = Brushes.Teal; // Color de los números (puedes cambiarlo a Gray, Blue, etc.)
+            System.Drawing.Font fuente = richProgramaFuente.Font;
+            System.Drawing.Brush brocha = System.Drawing.Brushes.Teal;
 
-            // 3. Dibujamos los números uno por uno
             for (int i = primeraLineaVisible; i <= ultimaLineaVisible; i++)
             {
-                // Buscamos la coordenada 'Y' exacta de esa línea dentro del RichTextBox
                 int indicePrimerCaracterLinea = richProgramaFuente.GetFirstCharIndexFromLine(i);
-                Point posicion = richProgramaFuente.GetPositionFromCharIndex(indicePrimerCaracterLinea);
-
-                // Alineamos el número a la derecha del PictureBox y lo dibujamos
+                System.Drawing.Point posicion = richProgramaFuente.GetPositionFromCharIndex(indicePrimerCaracterLinea);
                 string numeroDeLinea = (i + 1).ToString();
-                SizeF tamanoTexto = e.Graphics.MeasureString(numeroDeLinea, fuente);
-
-                // Dibuja el texto en la posición calculada
+                System.Drawing.SizeF tamanoTexto = e.Graphics.MeasureString(numeroDeLinea, fuente);
                 e.Graphics.DrawString(numeroDeLinea, fuente, brocha, picLineas.Width - tamanoTexto.Width - 5, posicion.Y);
             }
         }
 
         private void picLinea2_Paint(object sender, PaintEventArgs e)
         {
-            // 1. Calculamos cuál es la primera y última línea que el usuario tiene en pantalla
-            int primerCaracterVisible = richArchivoDeTokens.GetCharIndexFromPosition(new Point(0, 0));
+            int primerCaracterVisible = richArchivoDeTokens.GetCharIndexFromPosition(new System.Drawing.Point(0, 0));
             int primeraLineaVisible = richArchivoDeTokens.GetLineFromCharIndex(primerCaracterVisible);
 
-            int ultimoCaracterVisible = richArchivoDeTokens.GetCharIndexFromPosition(new Point(0, richArchivoDeTokens.Height));
+            int ultimoCaracterVisible = richArchivoDeTokens.GetCharIndexFromPosition(new System.Drawing.Point(0, richArchivoDeTokens.Height));
             int ultimaLineaVisible = richArchivoDeTokens.GetLineFromCharIndex(ultimoCaracterVisible);
 
-            // 2. Elegimos la fuente y el color de los números (Usa la misma fuente que tu código)
-            Font fuente = richArchivoDeTokens.Font;
-            Brush brocha = Brushes.Teal; // Color de los números (puedes cambiarlo a Gray, Blue, etc.)
+            System.Drawing.Font fuente = richArchivoDeTokens.Font;
+            System.Drawing.Brush brocha = System.Drawing.Brushes.Teal;
 
-            // 3. Dibujamos los números uno por uno
             for (int i = primeraLineaVisible; i <= ultimaLineaVisible; i++)
             {
-                // Buscamos la coordenada 'Y' exacta de esa línea dentro del RichTextBox
                 int indicePrimerCaracterLinea = richArchivoDeTokens.GetFirstCharIndexFromLine(i);
-                Point posicion = richArchivoDeTokens.GetPositionFromCharIndex(indicePrimerCaracterLinea);
-
-                // Alineamos el número a la derecha del PictureBox y lo dibujamos
+                System.Drawing.Point posicion = richArchivoDeTokens.GetPositionFromCharIndex(indicePrimerCaracterLinea);
                 string numeroDeLinea = (i + 1).ToString();
-                SizeF tamanoTexto = e.Graphics.MeasureString(numeroDeLinea, fuente);
-
-                // Dibuja el texto en la posición calculada
+                System.Drawing.SizeF tamanoTexto = e.Graphics.MeasureString(numeroDeLinea, fuente);
                 e.Graphics.DrawString(numeroDeLinea, fuente, brocha, picLinea2.Width - tamanoTexto.Width - 5, posicion.Y);
             }
         }
