@@ -1,0 +1,7 @@
+"START"
+"  IF var \u003E 0 THEN"
+"      WHILE var \u003C 10 DO"
+""
+"      ENDWHILE"
+"   ENDIF"
+"END"

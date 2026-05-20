@@ -190,8 +190,6 @@ namespace Interfaz_Lexico
                 if (!Match("RW17", "UNTIL")) ReportarError("Se esperaba la palabra reservada UNTIL al final del EXECUTE.");
                 ParsearCondicion();
 
-                // Cierre: Ajusta si en tu imagen dice ENDEXECUTE o ENDDO u otro
-                if (!Match(/*"RW23", "ENDEXECUTE",*/ "RW23", "ENDDO")) ReportarError("Se esperaba cierre ENDEXECUTE.");
             }
             else
             {
@@ -220,7 +218,10 @@ namespace Interfaz_Lexico
         private void ParsearExpresion()
         {
             ParsearTermino();
-            while (pos < tokens.Count && (tokens[pos].Tipo.StartsWith("AO+") || tokens[pos].Tipo.StartsWith("AO-")))
+            // Aceptamos Suma (+), Resta (-) y operadores genéricos que arroje tu BD
+            while (pos < tokens.Count && (tokens[pos].Tipo.StartsWith("AO+") || tokens[pos].Tipo.StartsWith("AO-") ||
+                                          tokens[pos].Tipo.StartsWith("AO1") || tokens[pos].Tipo.StartsWith("AO2") ||
+                                          tokens[pos].Tipo == "AO" || tokens[pos].Tipo == "OPA"))
             {
                 pos++;
                 ParsearTermino();
@@ -230,21 +231,31 @@ namespace Interfaz_Lexico
         private void ParsearTermino()
         {
             ParsearFactor();
-            while (pos < tokens.Count && (tokens[pos].Tipo.StartsWith("AO*") || tokens[pos].Tipo.StartsWith("AO/")))
+            // Aceptamos Multiplicación (*), División (/) y operadores genéricos que arroje tu BD
+            while (pos < tokens.Count && (tokens[pos].Tipo.StartsWith("AO*") || tokens[pos].Tipo.StartsWith("AO/") ||
+                                          tokens[pos].Tipo.StartsWith("AO3") || tokens[pos].Tipo.StartsWith("AO4")))
             {
                 pos++;
                 ParsearFactor();
             }
         }
 
+
         private void ParsearFactor()
         {
             if (pos >= tokens.Count) return;
+
+            // Argumentos Básicos (Variables, números y strings)
             if (Match("IDV") || Match("INC") || Match("RNC") || Match("NUC") || Match("STR")) { }
-            else if (Match("SC("))
+
+            // Si encuentra un Paréntesis de Apertura: Aceptamos SC(, (, CE1, etc.
+            else if (Match("SC[", "(", "CE1", "CE"))
             {
-                ParsearExpresion();
-                if (!Match("SC)")) ReportarError("Se esperaba cierre de paréntesis 'SC)'.");
+                ParsearExpresion(); // Resuelve matemáticamente todo lo de adentro
+
+                // Exige un Paréntesis de Cierre: Aceptamos SC), ), CE2, etc.
+                if (!Match("SC]", ")", "CE2", "CE"))
+                    ReportarError("Se esperaba cierre de paréntesis.");
             }
             else
             {

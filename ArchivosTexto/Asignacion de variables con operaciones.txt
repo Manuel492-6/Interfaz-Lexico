@@ -1,0 +1,6 @@
+"START"
+"  miVariable = \u0022Hola_Mundo\u0022"
+"  otraVariable = ( 5 \u002B 3 )"
+"  calculo = ( otraVariable * 2 ) \u002B ( 10 / 5 )"
+"  PRINT calculo"
+"END"

@@ -1,0 +1,7 @@
+"START"
+"  contador = 1"
+"  EXECUTE"
+"      PRINT contador"
+"      contador = contador \u002B 1"
+"  UNTIL contador == 5"
+"END"

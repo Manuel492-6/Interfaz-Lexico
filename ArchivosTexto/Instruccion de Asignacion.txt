@@ -1,0 +1,5 @@
+"START"
+"  resultado = ( 10 \u002B 5 ) * 2"
+"  division = resultado / ( 2 \u002B 1 )"
+"  PRINT division"
+"END"

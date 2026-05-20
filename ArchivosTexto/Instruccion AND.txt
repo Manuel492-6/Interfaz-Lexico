@@ -1,0 +1,5 @@
+"START"
+"  IF miVariable == 10 AND otraVariable \u003C 5 THEN"
+"      PRINT miVariable"
+"  ENDIF"
+"END"

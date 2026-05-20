@@ -1,0 +1,7 @@
+"START"
+"READ miVariable"
+"miVariable = 100 \u002B 50"
+"IF miVariable \u003E 10 THEN"
+"    PRINT miVariable"
+"ENDIF"
+"END"

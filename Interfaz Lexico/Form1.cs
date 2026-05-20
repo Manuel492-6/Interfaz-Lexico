@@ -300,12 +300,9 @@ namespace Interfaz_Lexico
             picLineas.Invalidate(); // Solo se actualizan las líneas del editor visualmente
         }
 
-        // =====================================================================
-        // BOTÓN PRINCIPAL DE ANÁLISIS (LÉXICO Y SINTÁCTICO)
-        // =====================================================================
         private void btnAnalizar_Click(object sender, EventArgs e)
         {
-            // 1. Limpieza General
+            // Limpieza General
             richArchivoDeTokens.Clear();
             dgtErrores.Rows.Clear();
             if (!ListaDeIdentificadoresOrdenada.Vacia) ListaDeIdentificadoresOrdenada.Vaciar();
@@ -313,7 +310,7 @@ namespace Interfaz_Lexico
             List<string> Tokens = new List<string>();
             int NumeroDeLineas = richProgramaFuente.Lines.Length;
 
-            // 2. Ejecutar Analizador LÉXICO Línea por Línea
+            // Ejecutar Analizador LÉXICO Línea por Línea
             for (int i = 0; i < NumeroDeLineas; i++)
             {
                 VerificarToken(i, Tokens);
@@ -321,7 +318,7 @@ namespace Interfaz_Lexico
             // Agregar tokens al UI
             richArchivoDeTokens.Lines = Tokens.ToArray();
 
-            // 3. Preparar los tokens generados para el Analizador SINTÁCTICO
+            // Preparar los tokens generados para el Analizador SINTÁCTICO
             List<TokenSintactico> listaTokensSintacticos = new List<TokenSintactico>();
             for (int i = 0; i < richArchivoDeTokens.Lines.Length; i++)
             {
@@ -337,11 +334,11 @@ namespace Interfaz_Lexico
                 }
             }
 
-            // 4. Ejecutar Analizador SINTÁCTICO
+            //Ejecutar Analizador SINTÁCTICO
             AnalizadorSintactico sintactico = new AnalizadorSintactico(listaTokensSintacticos, dgtErrores);
             sintactico.ParsearPrograma();
 
-            // 5. Totalizador de Errores al final de la tabla
+            // Totalizador de Errores al final de la tabla
             int conteoErrores = dgtErrores.Rows.Count;
             ContadorErrores = conteoErrores;
             dgtErrores.Rows.Add("Total de Errores", conteoErrores);
