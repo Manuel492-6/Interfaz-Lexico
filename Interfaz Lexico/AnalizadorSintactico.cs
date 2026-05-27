@@ -132,7 +132,7 @@ namespace Interfaz_Lexico
 
                 if (!Match("RW13", "ENDCASE")) ReportarError("Se esperaba cierre ENDCASE (RW13).");
             }
-            // 6. Ciclo WHILE NORMAL
+            // 6.14WHILE NORMAL
             else if (t.StartsWith("RW20") || t.StartsWith("WHILE"))
             {
                 Match("RW20", "WHILE");
@@ -143,7 +143,7 @@ namespace Interfaz_Lexico
                 ParsearInstrucciones();
                 if (!Match("RW24", "ENDWHILE")) ReportarError("Se esperaba cierre ENDWHILE (RW24).");
             }
-            // 7. Ciclo FOR (Revisa que los RW14, RW15, etc., sean los correctos de tu imagen)
+            // 7.FOR (Revisa que los RW14, RW15, etc., sean los correctos de tu imagen)
             else if (t.StartsWith("RW14") || t.StartsWith("FOR"))
             {
                 Match("RW14", "FOR");
@@ -164,7 +164,7 @@ namespace Interfaz_Lexico
 
                 if (!Match("RW19", "ENDFOR")) ReportarError("Se esperaba cierre ENDFOR.");
             }
-            // 8. NUEVO: Ciclo DO WHILE (Ej. DO ... instrucciones ... WHILE condicion ENDDO)
+            // 8. Ciclo DO WHILE (Ej. DO ... instrucciones ... WHILE condicion ENDDO)
             else if (t.StartsWith("RW21") || t.StartsWith("DO"))
             {
                 Match("RW21", "DO");
@@ -178,7 +178,7 @@ namespace Interfaz_Lexico
 
                 if (!Match("RW23", "ENDDO")) ReportarError("Se esperaba cierre ENDDO (RW23).");
             }
-            // 9. NUEVO: Ciclo EXECUTE (Ej. EXECUTE ... instrucciones ... UNTIL condicion ENDEXECUTE)
+            // 9. Ciclo EXECUTE (Ej. EXECUTE ... instrucciones ... UNTIL condicion ENDEXECUTE)
             else if (t.StartsWith("RW22") || t.StartsWith("EXECUTE"))
             {
                 Match("RW22", "EXECUTE");

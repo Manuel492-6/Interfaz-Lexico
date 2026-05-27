@@ -125,7 +125,7 @@
             dgtErrores.Location = new Point(600, 544);
             dgtErrores.Name = "dgtErrores";
             dgtErrores.RowHeadersWidth = 51;
-            dgtErrores.Size = new Size(603, 188);
+            dgtErrores.Size = new Size(1055, 188);
             dgtErrores.TabIndex = 8;
             // 
             // Linea
@@ -295,7 +295,7 @@
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.AliceBlue;
             CancelButton = btnCargarPrograma;
-            ClientSize = new Size(1459, 764);
+            ClientSize = new Size(1769, 764);
             Controls.Add(label5);
             Controls.Add(picLinea2);
             Controls.Add(picLineas);
