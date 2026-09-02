@@ -1,0 +1,8 @@
+"START"
+"  FOR contador = FROM 1 UNTIL contador \u003C= 10 INTERVAL 1"
+"      PRINT contador"
+"   DEL 5"
+"  ENDFOR"
+"END"
+""
+""
