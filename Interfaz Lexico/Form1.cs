@@ -11,8 +11,13 @@ namespace Interfaz_Lexico
         string NombreArchivo = "..\\..\\..\\..\\ArchivosTexto\\Archivo.txt";
         string NombreArchivo2 = "..\\..\\..\\..\\ArchivosTexto\\Archivo2.txt";
         List<Identificador> ListaDeIdentificadores = new List<Identificador>();
+
+        // Cambia aqu√≠ los datos a los reales de tu gestor
         private string ConexionBD = @"Server=DESKTOP-3G6AMVL\SQLEXPRESS; Database=NovaNyx; Integrated Security=True; TrustServerCertificate=True;";
+
         ClaseListaSimpleOrdenada<Identificador> ListaDeIdentificadoresOrdenada = new ClaseListaSimpleOrdenada<Identificador>();
+        private AnalizadorSemanticoJerarquia analizadorSemantico = new AnalizadorSemanticoJerarquia();
+        private List<ResultadoSemanticoOperacion> operacionesDetectadas = new List<ResultadoSemanticoOperacion>();
         private string[,] matrizCompleta;
         private List<string> alfabetoTemporal = new List<string>();
 
@@ -21,10 +26,10 @@ namespace Interfaz_Lexico
             {"Error identificador no valido","__EIDNV__" },
             {"Error operador aritmetico no valido","__EARONV__" },
             {"Error operador logico no valido","__ELOPNV__" },
-            { "Error operador relacional no valido","__EREONV__"},
+            {"Error operador relacional no valido","__EREONV__"},
             {"Error operador de asignacion no valido","__EALONV__" },
-            { "Error constante numerica no valida","__ENUCNV__"},
-            { "Error cadena no valida","__ESTRNV__"},
+            {"Error constante numerica no valida","__ENUCNV__"},
+            {"Error cadena no valida","__ESTRNV__"},
             {"Error comentario no valido","__ECOMNV__"},
             {"Error caracter especial no valido","__ESPCNV__"},
             {"Error palabra reservada no valida","__ERWNV__"},
@@ -56,41 +61,35 @@ namespace Interfaz_Lexico
         {
             try
             {
-                // Se usan los mÈtodos combinados para detectar la estructura y cargar los datos
                 CargarEstructuraYDatosDesdeSQL();
                 ConfigurarDataGridView();
                 richArchivoDeTokens.ReadOnly = true;
 
-                // Conectamos el evento Paint de nuestro PictureBox a nuestro mÈtodo
                 picLineas.Paint += picLineas_Paint;
                 picLinea2.Paint += picLinea2_Paint;
 
-                // Conectamos el Scroll del RichTextBox para que los n˙meros bajen al usar la rueda del ratÛn
+                // Solo para redibujar visualmente cuando se hace scroll
                 richProgramaFuente.VScroll += (s, ev) => picLineas.Invalidate();
                 richProgramaFuente.HScroll += (s, ev) => picLineas.Invalidate();
 
                 richArchivoDeTokens.VScroll += (s, ev) => picLinea2.Invalidate();
                 richArchivoDeTokens.HScroll += (s, ev) => picLinea2.Invalidate();
+
+                // Estado de espera inicial hasta presionar 'Analizar Todo'
+                InicializarArbolEnEspera();
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Error al conectar o procesar la tabla:\n\n" + ex.Message);
             }
         }
+
         private void VerificarToken(int i, List<string> Tokens)
         {
-            //Almacena Cada token de cada linea
             string NuevoToken = "";
-
-            //Separa las palabras de cada linea por espacios y las agrega a la lista de tokens
             string[] palabras = richProgramaFuente.Lines[i].Split(" ", StringSplitOptions.RemoveEmptyEntries);
-
             bool Error = false;
 
-            richArchivoDeTokens.Clear();
-
-
-            //Agrega cada palabra de la linea a la variable NuevoToken, separada por un espacio
             for (int j = 0; j < palabras.Length; j++)
             {
                 int EstadoActual = 1;
@@ -101,27 +100,23 @@ namespace Interfaz_Lexico
                 foreach (char simbolo in palabras[j])
                 {
                     contadorChar++;
-
                     columna = alfabetoTemporal.IndexOf(simbolo.ToString());
-
 
                     if (columna == -1)
                     {
                         NuevoToken += "__ERROR__ " + " ";
-                        Debug.WriteLine($"Simbolo: {simbolo} no reconocido en el alfabeto.");
                         AgregarErrores("__ERROR__", i);
                         Error = true;
                         continue;
                     }
 
                     SiguienteEstado = matrizCompleta[EstadoActual, columna + 1] == "Error" ? -1 : int.Parse(matrizCompleta[EstadoActual, columna + 1]);
-                    Debug.WriteLine($"Simbolo: {simbolo} | Estado Actual: {EstadoActual} | Columna: {columna + 1} | Siguiente Estado: {SiguienteEstado}");
 
                     if (SiguienteEstado == -1)
                     {
-                        //Error porque no se acepta el token
-                        NuevoToken += Errores.ContainsKey(matrizCompleta[EstadoActual, matrizCompleta.GetLength(1) - 1]) ? Errores[matrizCompleta[EstadoActual, matrizCompleta.GetLength(1) - 1]] : "__ERROR__";
-                        AgregarErrores(Errores[matrizCompleta[EstadoActual, matrizCompleta.GetLength(1) - 1]], i);
+                        string eKey = matrizCompleta[EstadoActual, matrizCompleta.GetLength(1) - 1];
+                        NuevoToken += Errores.ContainsKey(eKey) ? Errores[eKey] : "__ERROR__";
+                        AgregarErrores(Errores.ContainsKey(eKey) ? Errores[eKey] : "__ERROR__", i);
                         Error = true;
                         continue;
                     }
@@ -131,26 +126,21 @@ namespace Interfaz_Lexico
                 if (!Error)
                 {
                     columna = alfabetoTemporal.IndexOf("EOC");
-
                     SiguienteEstado = int.TryParse(matrizCompleta[EstadoActual, columna + 1], out int resultado) ? resultado : -1;
 
                     if (SiguienteEstado == -1)
                     {
-                        //Error porque no se acepta el token
-                        Debug.WriteLine($"Simbolo: EOC | Estado Actual: {EstadoActual} | Columna: {columna + 1} | Siguiente Estado: {SiguienteEstado}");
-                        Debug.WriteLine(matrizCompleta[EstadoActual, matrizCompleta.GetLength(1) - 1].ToString());
-                        NuevoToken += Errores[matrizCompleta[EstadoActual, matrizCompleta.GetLength(1) - 1]] + " ";
-                        AgregarErrores(Errores[matrizCompleta[EstadoActual, matrizCompleta.GetLength(1) - 1]], i);
+                        string eKey = matrizCompleta[EstadoActual, matrizCompleta.GetLength(1) - 1];
+                        NuevoToken += Errores.ContainsKey(eKey) ? Errores[eKey] : "__ERROR__";
+                        AgregarErrores(Errores.ContainsKey(eKey) ? Errores[eKey] : "__ERROR__", i);
                         continue;
                     }
                     else
                     {
                         if (matrizCompleta[SiguienteEstado, matrizCompleta.GetLength(1) - 1] == "IDV")
                         {
-
                             if (contadorChar == palabras[j].Length)
                             {
-                                Debug.WriteLine("Misma longitud");
                                 Identificador nuevoIdentificador = new Identificador();
                                 nuevoIdentificador.Nombre = palabras[j];
                                 nuevoIdentificador.Valor = "Null";
@@ -158,7 +148,6 @@ namespace Interfaz_Lexico
 
                                 Identificador existente = null;
 
-                                // Buscamos si ya existe en la lista iterando sobre ella
                                 if (!ListaDeIdentificadoresOrdenada.Vacia)
                                 {
                                     foreach (var item in ListaDeIdentificadoresOrdenada)
@@ -174,19 +163,15 @@ namespace Interfaz_Lexico
                                 int idAUsar;
                                 if (existente == null)
                                 {
-                                    // Es nuevo, le asignamos un Identificador UNICO
                                     idAUsar = ListaDeIdentificadoresOrdenada.Contar + 1;
                                     nuevoIdentificador.NumeroDeIdentificador = idAUsar;
                                     ListaDeIdentificadoresOrdenada.Insertar(nuevoIdentificador);
                                 }
                                 else
                                 {
-                                    // Ya existe, obtenemos su ID previo
                                     idAUsar = existente.NumeroDeIdentificador;
-                                    Debug.WriteLine($"El identificador '{palabras[j]}' ya existe en la tabla de sÌmbolos con ID {idAUsar}.");
                                 }
 
-                                // Concatenamos el n˙mero de identificador al token (ej. IDV1, IDV2...)
                                 NuevoToken += matrizCompleta[SiguienteEstado, matrizCompleta.GetLength(1) - 1] + idAUsar.ToString() + " ";
                             }
                             else
@@ -196,40 +181,22 @@ namespace Interfaz_Lexico
                         }
                         else
                         {
-                            //Token aceptado
                             NuevoToken += matrizCompleta[SiguienteEstado, matrizCompleta.GetLength(1) - 1] + " ";
                         }
-
-
-
                     }
-
-
                 }
                 Error = false;
-                Debug.WriteLine("---------------------------------------");
-
             }
-
 
             dgtTablaDeSimbolos.Rows.Clear();
             foreach (var identificador in ListaDeIdentificadoresOrdenada)
             {
-                // Mostramos directamente el NumeroDeIdentificador que calculamos (ya empieza desde 1)
                 dgtTablaDeSimbolos.Rows.Add(identificador.NumeroDeIdentificador, identificador.Nombre, identificador.TipoDeDato, identificador.Valor);
             }
 
-            //Agrega el token de la linea a la lista de tokens, eliminando el espacio al final
             Tokens.Add(NuevoToken.TrimEnd());
-
-
-            //Agrega los token al nuevo archivo de tokens
-            richArchivoDeTokens.Lines = Tokens.ToArray();
             palabras = null;
         }
-
-
-
 
         private void CargarEstructuraYDatosDesdeSQL()
         {
@@ -237,7 +204,7 @@ namespace Interfaz_Lexico
             {
                 conn.Open();
 
-                string query = "SELECT * FROM MatrizTransicion"; // Mejor ordenamiento seguro
+                string query = "SELECT * FROM MatrizTransicion";
                 SqlCommand cmd = new SqlCommand(query, conn);
 
                 SqlDataAdapter adapter = new SqlDataAdapter(cmd);
@@ -245,11 +212,8 @@ namespace Interfaz_Lexico
                 adapter.Fill(tablaDB);
 
                 if (tablaDB.Rows.Count == 0)
-                    throw new Exception("La tabla MatrizTransicion est· vacÌa.");
+                    throw new Exception("La tabla MatrizTransicion est√° vac√≠a.");
 
-
-                // 1. RECOPILAR EL ALFABETO TEMPORALMENTE (Para saber de quÈ tamaÒo ser· la matriz)
-                //List<string> alfabetoTemporal = new List<string>();
                 Dictionary<string, string> mapaColumnas = new Dictionary<string, string>();
 
                 foreach (DataColumn col in tablaDB.Columns)
@@ -257,7 +221,6 @@ namespace Interfaz_Lexico
                     string nombreReal = col.ColumnName;
                     if (nombreReal != tablaDB.Columns[0].ColumnName && nombreReal.ToUpper() != "ACEPTA")
                     {
-
                         string nombreLimpio = nombreReal;
                         if (nombreReal.Length == 2 && nombreReal.EndsWith("1"))
                         {
@@ -268,7 +231,6 @@ namespace Interfaz_Lexico
                     }
                 }
 
-                // 2. DIMENSIONAR LA MATRIZ ⁄NICA
                 int maxEstado = 0;
                 foreach (DataRow row in tablaDB.Rows)
                 {
@@ -276,17 +238,13 @@ namespace Interfaz_Lexico
                     {
                         maxEstado = id;
                     }
-
-
                 }
 
-
-                int totalFilas = maxEstado + 1; // +1 para la fila de ENCABEZADOS (Fila 0)
-                int totalColumnas = alfabetoTemporal.Count + 2; // +1 para columna "Estado" y +1 para columna "ACEPTA"
+                int totalFilas = maxEstado + 1;
+                int totalColumnas = alfabetoTemporal.Count + 2;
 
                 matrizCompleta = new string[totalFilas, totalColumnas];
 
-                // 3. LLENAR LA FILA CERO (0) CON LOS ENCABEZADOS
                 matrizCompleta[0, 0] = "Estado";
                 for (int c = 0; c < alfabetoTemporal.Count; c++)
                 {
@@ -294,18 +252,16 @@ namespace Interfaz_Lexico
                 }
                 matrizCompleta[0, totalColumnas - 1] = "ACEPTA";
 
-                // 4. INICIALIZAR EL RESTO DE LA MATRIZ POR DEFECTO (Para evitar nulos)
                 for (int f = 1; f < totalFilas; f++)
                 {
-                    matrizCompleta[f, 0] = f.ToString(); // Guardamos el Estado en la col 0
+                    matrizCompleta[f, 0] = f.ToString();
                     for (int c = 1; c < totalColumnas - 1; c++)
                     {
-                        matrizCompleta[f, c] = "Error"; // TransiciÛn por defecto
+                        matrizCompleta[f, c] = "Error";
                     }
-                    matrizCompleta[f, totalColumnas - 1] = "No valido"; // Acepta por defecto
+                    matrizCompleta[f, totalColumnas - 1] = "No valido";
                 }
 
-                // 5. VOLCAR LOS DATOS REALES DE LA BASE DE DATOS A LA MATRIZ
                 foreach (DataRow row in tablaDB.Rows)
                 {
                     if (!int.TryParse(row[0].ToString(), out int idEstadoActual))
@@ -313,14 +269,12 @@ namespace Interfaz_Lexico
                         continue;
                     }
 
-                    // La fila en la matriz ser· el (Estado + 1) porque la fila 0 son los encabezados
                     int filaMatriz = idEstadoActual;
 
-                    // Llenar transiciones
                     for (int c = 0; c < alfabetoTemporal.Count; c++)
                     {
                         string simbolo = alfabetoTemporal[c];
-                        string nombreColDB = mapaColumnas[simbolo]; // Buscamos cÛmo se llama en SQL (ej: "a1")
+                        string nombreColDB = mapaColumnas[simbolo];
 
                         object valorCelda = row[nombreColDB];
 
@@ -334,69 +288,96 @@ namespace Interfaz_Lexico
                         }
                     }
 
-                    // Llenar columna ACEPTA
                     matrizCompleta[filaMatriz, totalColumnas - 1] = row["ACEPTA"]?.ToString() ?? "No valido";
                 }
             }
         }
 
-
-
+        // Evento de cambio de texto en el Programa Fuente
         private void richProgramaFuente_TextChanged(object sender, EventArgs e)
         {
-            picLineas.Invalidate();
+            picLineas.Invalidate(); // Se actualizan las l√≠neas del editor visualmente
+        }
 
-            //Verifica el numero de lineas
-            int NumeroDeLineas = richProgramaFuente.Lines.Count();
-
-            //Crea una lista de tokens que se llenara con los tokens de cada linea
-            List<string> Tokens = new List<string>();
-
-            Tokens.Clear();
-            if (ListaDeIdentificadoresOrdenada.Vacia == false)
-            {
-                ListaDeIdentificadoresOrdenada.Vaciar();
-            }
-
+        // =====================================================================
+        // BOT√ìN PRINCIPAL DE AN√ÅLISIS (L√âXICO Y SINT√ÅCTICO)
+        // =====================================================================
+        private void btnAnalizar_Click(object sender, EventArgs e)
+        {
+            // 1. Limpieza General
+            richArchivoDeTokens.Clear();
             dgtErrores.Rows.Clear();
+            if (!ListaDeIdentificadoresOrdenada.Vacia) ListaDeIdentificadoresOrdenada.Vaciar();
 
-            //Recorre cada linea del programa fuente, separa las palabras por espacios y las agrega a la lista de tokens
+            List<string> Tokens = new List<string>();
+            int NumeroDeLineas = richProgramaFuente.Lines.Length;
+
+            // 2. Ejecutar Analizador L√âXICO L√≠nea por L√≠nea
             for (int i = 0; i < NumeroDeLineas; i++)
             {
-                Debug.WriteLine($"Numero de filas {dgtErrores.Rows.Count}");
-
-                if (dgtErrores.Rows.Count > 0)
-                {
-                    dgtErrores.Rows.RemoveAt(dgtErrores.Rows.Count - 1);
-                }
                 VerificarToken(i, Tokens);
+            }
+            // Agregar tokens al UI
+            richArchivoDeTokens.Lines = Tokens.ToArray();
 
+            // 3. Preparar los tokens generados para el Analizador SINT√ÅCTICO y SEM√ÅNTICO
+            List<TokenSintactico> listaTokensSintacticos = new List<TokenSintactico>();
+            for (int i = 0; i < richArchivoDeTokens.Lines.Length; i++)
+            {
+                string lineaTokens = richArchivoDeTokens.Lines[i];
+                string[] partes = lineaTokens.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                string[] palabras = i < richProgramaFuente.Lines.Length
+                    ? richProgramaFuente.Lines[i].Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
+                    : new string[0];
 
-                int conteoErrores = (dgtErrores.Rows.Count == 0) ? 0 : dgtErrores.Rows.Count;
+                for (int p = 0; p < partes.Length; p++)
+                {
+                    string parte = partes[p];
+                    // Evitamos mandar los errores l√©xicos al sint√°ctico para no crear cascadas de fallos
+                    if (parte == "__ERROR__" || parte.StartsWith("Error")) continue;
 
-                dgtErrores.Rows.Add("Total de Errores", conteoErrores);
+                    string lexema = p < palabras.Length ? palabras[p] : parte;
+                    listaTokensSintacticos.Add(new TokenSintactico() { Tipo = parte, Lexema = lexema, Linea = i + 1 });
+                }
             }
 
+            // Registrar identificadores existentes en el analizador sem√°ntico
+            analizadorSemantico = new AnalizadorSemanticoJerarquia();
+            if (!ListaDeIdentificadoresOrdenada.Vacia)
+            {
+                foreach (var id in ListaDeIdentificadoresOrdenada)
+                {
+                    string tipoInicial = (!string.IsNullOrEmpty(id.TipoDeDato) && id.TipoDeDato != "Null") ? id.TipoDeDato : "int";
+                    string? valInicial = (!string.IsNullOrEmpty(id.Valor) && id.Valor != "Null") ? id.Valor : null;
+                    analizadorSemantico.RegistrarVariable(id.Nombre, tipoInicial, valInicial);
+                }
+            }
+
+            // 4. Ejecutar Analizador SINT√ÅCTICO y SEM√ÅNTICO
+            AnalizadorSintactico sintactico = new AnalizadorSintactico(listaTokensSintacticos, dgtErrores, analizadorSemantico);
+            sintactico.ParsearPrograma();
+
+            // 5. Compilar simult√°neamente el √Årbol de Jerarqu√≠a junto con los tokens
+            CompilarArbolJerarquia(sintactico);
+
+            // 6. Actualizar la tabla de s√≠mbolos en el DataGridView con los tipos y valores del an√°lisis sem√°ntico / √°rbol
+            ActualizarTablaDeSimbolos();
+
+            // 7. Totalizador de Errores al final de la tabla
+            int conteoErrores = dgtErrores.Rows.Count;
+            dgtErrores.Rows.Add("Total de Errores", conteoErrores);
         }
 
         private void AgregarErrores(string error, int linea)
         {
             error = Errores2.ContainsKey(error) ? Errores2[error] : "Error desconocido";
-
             dgtErrores.Rows.Add(linea + 1, error);
 
-
-
-            foreach (DataGridViewRow row in dgtErrores.Rows)
+            int lastIndex = dgtErrores.Rows.Count - 1;
+            if (lastIndex >= 0)
             {
-                if (row.Cells[0].Value != null)
-                {
-                    row.DefaultCellStyle.BackColor = Color.Red;
-                }
+                dgtErrores.Rows[lastIndex].DefaultCellStyle.BackColor = System.Drawing.Color.Red;
             }
-
-
-
         }
 
         private void ConfigurarDataGridView()
@@ -410,16 +391,11 @@ namespace Interfaz_Lexico
             dgtTablaDeSimbolos.AllowUserToDeleteRows = false;
             dgtTablaDeSimbolos.ReadOnly = true;
             dgtTablaDeSimbolos.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-
-
-
         }
 
         private void btnGuardarPrograma_Click(object sender, EventArgs e)
         {
-
             Archivo<string> archivoTexto = new Archivo<string>(NombreArchivo);
-
 
             if (File.Exists(archivoTexto.NombreArchivo))
             {
@@ -440,37 +416,26 @@ namespace Interfaz_Lexico
         private void btnCargarPrograma_Click(object sender, EventArgs e)
         {
             Archivo<string> archivoTexto = new Archivo<string>(NombreArchivo);
-
             archivoTexto.HacerModoLectura();
-
 
             richProgramaFuente.Clear();
             dgtErrores.Rows.Clear();
             dgtTablaDeSimbolos.Rows.Clear();
+            richArchivoDeTokens.Clear();
 
-            // Leemos hasta que se acabe el archivo
             while (!archivoTexto.FinArchivo)
             {
                 string lineaLeida = archivoTexto.LeerObjeto();
-
                 if (lineaLeida != null)
                 {
-                    // Agregamos la lÌnea al RichTextBox y damos un salto de lÌnea
                     richProgramaFuente.AppendText(lineaLeida + Environment.NewLine);
                 }
             }
 
             archivoTexto.CerrarArchivo();
-
             richProgramaFuente.ReadOnly = true;
             richProgramaFuente.Enabled = false;
-
-            richProgramaFuente.HandleCreated += (s, ev) =>
-            {
-                // Forzamos el evento TextChanged para procesar el programa fuente cargado
-                richProgramaFuente_TextChanged(s, EventArgs.Empty);
-            };
-            richProgramaFuente.AppendText(""); // Esto disparar· el evento TextChanged
+            InicializarArbolEnEspera();
         }
 
         private void btnEditarPrograma_Click(object sender, EventArgs e)
@@ -482,9 +447,7 @@ namespace Interfaz_Lexico
 
         private void btnGuardarArchivo_Click(object sender, EventArgs e)
         {
-
             Archivo<string> archivoTexto = new Archivo<string>(NombreArchivo2);
-
 
             if (File.Exists(archivoTexto.NombreArchivo))
             {
@@ -502,61 +465,44 @@ namespace Interfaz_Lexico
             MessageBox.Show("Archivo guardado correctamente.");
         }
 
-        // MÈtodo que dibuja los n˙meros en el PictureBox
         private void picLineas_Paint(object sender, PaintEventArgs e)
         {
-            // 1. Calculamos cu·l es la primera y ˙ltima lÌnea que el usuario tiene en pantalla
-            int primerCaracterVisible = richProgramaFuente.GetCharIndexFromPosition(new Point(0, 0));
+            int primerCaracterVisible = richProgramaFuente.GetCharIndexFromPosition(new System.Drawing.Point(0, 0));
             int primeraLineaVisible = richProgramaFuente.GetLineFromCharIndex(primerCaracterVisible);
 
-            int ultimoCaracterVisible = richProgramaFuente.GetCharIndexFromPosition(new Point(0, richProgramaFuente.Height));
+            int ultimoCaracterVisible = richProgramaFuente.GetCharIndexFromPosition(new System.Drawing.Point(0, richProgramaFuente.Height));
             int ultimaLineaVisible = richProgramaFuente.GetLineFromCharIndex(ultimoCaracterVisible);
 
-            // 2. Elegimos la fuente y el color de los n˙meros (Usa la misma fuente que tu cÛdigo)
-            Font fuente = richProgramaFuente.Font;
-            Brush brocha = Brushes.Teal; // Color de los n˙meros (puedes cambiarlo a Gray, Blue, etc.)
+            System.Drawing.Font fuente = richProgramaFuente.Font;
+            System.Drawing.Brush brocha = System.Drawing.Brushes.Teal;
 
-            // 3. Dibujamos los n˙meros uno por uno
             for (int i = primeraLineaVisible; i <= ultimaLineaVisible; i++)
             {
-                // Buscamos la coordenada 'Y' exacta de esa lÌnea dentro del RichTextBox
                 int indicePrimerCaracterLinea = richProgramaFuente.GetFirstCharIndexFromLine(i);
-                Point posicion = richProgramaFuente.GetPositionFromCharIndex(indicePrimerCaracterLinea);
-
-                // Alineamos el n˙mero a la derecha del PictureBox y lo dibujamos
+                System.Drawing.Point posicion = richProgramaFuente.GetPositionFromCharIndex(indicePrimerCaracterLinea);
                 string numeroDeLinea = (i + 1).ToString();
-                SizeF tamanoTexto = e.Graphics.MeasureString(numeroDeLinea, fuente);
-
-                // Dibuja el texto en la posiciÛn calculada
+                System.Drawing.SizeF tamanoTexto = e.Graphics.MeasureString(numeroDeLinea, fuente);
                 e.Graphics.DrawString(numeroDeLinea, fuente, brocha, picLineas.Width - tamanoTexto.Width - 5, posicion.Y);
             }
         }
 
         private void picLinea2_Paint(object sender, PaintEventArgs e)
         {
-            // 1. Calculamos cu·l es la primera y ˙ltima lÌnea que el usuario tiene en pantalla
-            int primerCaracterVisible = richArchivoDeTokens.GetCharIndexFromPosition(new Point(0, 0));
+            int primerCaracterVisible = richArchivoDeTokens.GetCharIndexFromPosition(new System.Drawing.Point(0, 0));
             int primeraLineaVisible = richArchivoDeTokens.GetLineFromCharIndex(primerCaracterVisible);
 
-            int ultimoCaracterVisible = richArchivoDeTokens.GetCharIndexFromPosition(new Point(0, richArchivoDeTokens.Height));
+            int ultimoCaracterVisible = richArchivoDeTokens.GetCharIndexFromPosition(new System.Drawing.Point(0, richArchivoDeTokens.Height));
             int ultimaLineaVisible = richArchivoDeTokens.GetLineFromCharIndex(ultimoCaracterVisible);
 
-            // 2. Elegimos la fuente y el color de los n˙meros (Usa la misma fuente que tu cÛdigo)
-            Font fuente = richArchivoDeTokens.Font;
-            Brush brocha = Brushes.Teal; // Color de los n˙meros (puedes cambiarlo a Gray, Blue, etc.)
+            System.Drawing.Font fuente = richArchivoDeTokens.Font;
+            System.Drawing.Brush brocha = System.Drawing.Brushes.Teal;
 
-            // 3. Dibujamos los n˙meros uno por uno
             for (int i = primeraLineaVisible; i <= ultimaLineaVisible; i++)
             {
-                // Buscamos la coordenada 'Y' exacta de esa lÌnea dentro del RichTextBox
                 int indicePrimerCaracterLinea = richArchivoDeTokens.GetFirstCharIndexFromLine(i);
-                Point posicion = richArchivoDeTokens.GetPositionFromCharIndex(indicePrimerCaracterLinea);
-
-                // Alineamos el n˙mero a la derecha del PictureBox y lo dibujamos
+                System.Drawing.Point posicion = richArchivoDeTokens.GetPositionFromCharIndex(indicePrimerCaracterLinea);
                 string numeroDeLinea = (i + 1).ToString();
-                SizeF tamanoTexto = e.Graphics.MeasureString(numeroDeLinea, fuente);
-
-                // Dibuja el texto en la posiciÛn calculada
+                System.Drawing.SizeF tamanoTexto = e.Graphics.MeasureString(numeroDeLinea, fuente);
                 e.Graphics.DrawString(numeroDeLinea, fuente, brocha, picLinea2.Width - tamanoTexto.Width - 5, posicion.Y);
             }
         }
@@ -564,6 +510,211 @@ namespace Interfaz_Lexico
         private void richArchivoDeTokens_TextChanged(object sender, EventArgs e)
         {
             picLinea2.Invalidate();
+        }
+
+        /// <summary>
+        /// Compila y genera el √Årbol de Jerarqu√≠a al presionar el bot√≥n 'Analizar Todo'
+        /// </summary>
+        public void CompilarArbolJerarquia(AnalizadorSintactico? sintactico = null)
+        {
+            // Registrar variables de la tabla de s√≠mbolos si existen y a√∫n no est√°n registradas
+            if (!ListaDeIdentificadoresOrdenada.Vacia)
+            {
+                foreach (var id in ListaDeIdentificadoresOrdenada)
+                {
+                    if (!analizadorSemantico.TieneVariable(id.Nombre))
+                    {
+                        string tipoInicial = (!string.IsNullOrEmpty(id.TipoDeDato) && id.TipoDeDato != "Null") ? id.TipoDeDato : "int";
+                        string? valInicial = (!string.IsNullOrEmpty(id.Valor) && id.Valor != "Null") ? id.Valor : null;
+                        analizadorSemantico.RegistrarVariable(id.Nombre, tipoInicial, valInicial);
+                    }
+                }
+            }
+
+            // Usar operaciones detectadas por el analizador sint√°ctico o extraerlas del c√≥digo
+            if (sintactico != null && sintactico.OperacionesDetectadas.Count > 0)
+            {
+                operacionesDetectadas = sintactico.OperacionesDetectadas;
+            }
+            else
+            {
+                operacionesDetectadas = analizadorSemantico.ExtraerOperacionesDeCodigoFuente(richProgramaFuente.Text);
+            }
+
+            // Cargar visualmente en tvArbolJerarquia
+            analizadorSemantico.CargarArbolSincronizado(tvArbolJerarquia, operacionesDetectadas);
+
+            // Sincronizar la tabla de s√≠mbolos en el DataGridView con los tipos y valores del √°rbol
+            ActualizarTablaDeSimbolos();
+
+            // Actualizar ComboBox con las operaciones detectadas
+            cboOperacionesCodigo.SelectedIndexChanged -= cboOperacionesCodigo_SelectedIndexChanged;
+            cboOperacionesCodigo.Items.Clear();
+
+            if (operacionesDetectadas.Count > 0)
+            {
+                for (int i = 0; i < operacionesDetectadas.Count; i++)
+                {
+                    var op = operacionesDetectadas[i];
+                    string estado = op.EsValida ? "‚úÖ" : "‚ùå";
+                    cboOperacionesCodigo.Items.Add($"{estado} Op {i + 1}: {op.ExpresionOriginal}");
+                }
+                cboOperacionesCodigo.SelectedIndex = 0;
+                cboOperacionesCodigo.SelectedIndexChanged += cboOperacionesCodigo_SelectedIndexChanged;
+
+                MostrarPasosOperacion(operacionesDetectadas[0]);
+            }
+            else
+            {
+                cboOperacionesCodigo.Items.Add("(No se detectaron operaciones)");
+                cboOperacionesCodigo.SelectedIndex = 0;
+                cboOperacionesCodigo.SelectedIndexChanged += cboOperacionesCodigo_SelectedIndexChanged;
+
+                lblEstadoSemantico.Text = "No se detectaron operaciones en el c√≥digo";
+                lblEstadoSemantico.ForeColor = Color.DimGray;
+                rtbPasosJerarquia.Clear();
+            }
+        }
+
+        /// <summary>
+        /// Sincroniza la tabla de s√≠mbolos (ListaDeIdentificadoresOrdenada y dgtTablaDeSimbolos)
+        /// con los tipos de datos y valores determinados por el analizador sem√°ntico y el √°rbol jer√°rquico.
+        /// </summary>
+        private void ActualizarTablaDeSimbolos()
+        {
+            if (!ListaDeIdentificadoresOrdenada.Vacia)
+            {
+                foreach (var identificador in ListaDeIdentificadoresOrdenada)
+                {
+                    string tipoSemantico = analizadorSemantico.ObtenerTipo(identificador.Nombre);
+                    if (!string.IsNullOrEmpty(tipoSemantico) && tipoSemantico != "Null")
+                    {
+                        identificador.TipoDeDato = tipoSemantico;
+                    }
+                    else if (string.IsNullOrEmpty(identificador.TipoDeDato) || identificador.TipoDeDato == "Null")
+                    {
+                        identificador.TipoDeDato = "int";
+                    }
+
+                    string? valorSemantico = analizadorSemantico.ObtenerValor(identificador.Nombre);
+                    if (!string.IsNullOrEmpty(valorSemantico))
+                    {
+                        identificador.Valor = valorSemantico;
+                    }
+                }
+            }
+
+            dgtTablaDeSimbolos.Rows.Clear();
+            foreach (var identificador in ListaDeIdentificadoresOrdenada)
+            {
+                dgtTablaDeSimbolos.Rows.Add(
+                    identificador.NumeroDeIdentificador,
+                    identificador.Nombre,
+                    identificador.TipoDeDato,
+                    identificador.Valor
+                );
+            }
+        }
+
+        /// <summary>
+        /// Establece el √°rbol en estado de espera inicial hasta presionar 'Analizar Todo'
+        /// </summary>
+        private void InicializarArbolEnEspera()
+        {
+            tvArbolJerarquia.BeginUpdate();
+            tvArbolJerarquia.Nodes.Clear();
+            TreeNode nodoEspera = new TreeNode("‚ö° Presiona 'Analizar Todo' para compilar el √°rbol")
+            {
+                ForeColor = Color.SlateGray
+            };
+            tvArbolJerarquia.Nodes.Add(nodoEspera);
+            tvArbolJerarquia.EndUpdate();
+
+            cboOperacionesCodigo.SelectedIndexChanged -= cboOperacionesCodigo_SelectedIndexChanged;
+            cboOperacionesCodigo.Items.Clear();
+            cboOperacionesCodigo.Items.Add("(Presiona 'Analizar Todo')");
+            cboOperacionesCodigo.SelectedIndex = 0;
+            cboOperacionesCodigo.SelectedIndexChanged += cboOperacionesCodigo_SelectedIndexChanged;
+
+            lblEstadoSemantico.Text = "Listo: presiona 'Analizar Todo'";
+            lblEstadoSemantico.ForeColor = Color.SlateGray;
+            rtbPasosJerarquia.Clear();
+        }
+
+        private void MostrarPasosOperacion(ResultadoSemanticoOperacion op)
+        {
+            rtbPasosJerarquia.Clear();
+            if (op == null) return;
+
+            if (op.EsValida)
+            {
+                string tipo = op.TipoDatoResultante;
+                string valor = !string.IsNullOrEmpty(op.ValorCalculado) ? $" | Resultado: {op.ValorCalculado}" : "";
+                lblEstadoSemantico.Text = $"‚úÖ Jerarqu√≠a V√°lida ({tipo}{valor})";
+                lblEstadoSemantico.ForeColor = Color.ForestGreen;
+
+                System.Text.StringBuilder sb = new System.Text.StringBuilder();
+                sb.AppendLine($"OPERACI√ìN: {op.ExpresionOriginal}");
+                sb.AppendLine("---------------------------------------------");
+                sb.AppendLine("ORDEN DE EVALUACI√ìN SEM√ÅNTICA POR JERARQU√çA:");
+                foreach (var paso in op.PasosEvaluacion)
+                {
+                    sb.AppendLine(paso);
+                }
+                if (!string.IsNullOrEmpty(op.ValorCalculado))
+                {
+                    sb.AppendLine("---------------------------------------------");
+                    sb.AppendLine($"VALOR FINAL CALCULADO: {op.ValorCalculado}");
+                }
+                rtbPasosJerarquia.Text = sb.ToString();
+            }
+            else
+            {
+                lblEstadoSemantico.Text = "‚ùå Error Sem√°ntico en la Operaci√≥n";
+                lblEstadoSemantico.ForeColor = Color.Red;
+
+                System.Text.StringBuilder sb = new System.Text.StringBuilder();
+                sb.AppendLine($"OPERACI√ìN CON ERROR: {op.ExpresionOriginal}");
+                sb.AppendLine("---------------------------------------------");
+                sb.AppendLine("ERRORES SEM√ÅNTICOS:");
+                foreach (var err in op.ErroresSemanticos)
+                {
+                    sb.AppendLine("‚Ä¢ " + err);
+                }
+                rtbPasosJerarquia.Text = sb.ToString();
+            }
+        }
+
+        private void cboOperacionesCodigo_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            int idx = cboOperacionesCodigo.SelectedIndex;
+            if (idx >= 0 && idx < operacionesDetectadas.Count)
+            {
+                MostrarPasosOperacion(operacionesDetectadas[idx]);
+            }
+        }
+
+        private void tvArbolJerarquia_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+            if (e.Node == null) return;
+
+            TreeNode actual = e.Node;
+            while (actual != null)
+            {
+                if (actual.Tag is ResultadoSemanticoOperacion opTag)
+                {
+                    MostrarPasosOperacion(opTag);
+                    int idx = operacionesDetectadas.IndexOf(opTag);
+                    if (idx >= 0 && idx < cboOperacionesCodigo.Items.Count && cboOperacionesCodigo.SelectedIndex != idx)
+                    {
+                        cboOperacionesCodigo.SelectedIndexChanged -= cboOperacionesCodigo_SelectedIndexChanged;
+                        cboOperacionesCodigo.SelectedIndex = idx;
+                        cboOperacionesCodigo.SelectedIndexChanged += cboOperacionesCodigo_SelectedIndexChanged;
+                    }
+                    break;
+                }
+                actual = actual.Parent;
+            }
         }
     }
 }

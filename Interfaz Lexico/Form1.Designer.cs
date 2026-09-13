@@ -1,16 +1,13 @@
-﻿namespace Interfaz_Lexico
+using System;
+using System.Drawing;
+using System.Windows.Forms;
+
+namespace Interfaz_Lexico
 {
     partial class Form1
     {
-        /// <summary>
-        ///  Required designer variable.
-        /// </summary>
         private System.ComponentModel.IContainer components = null;
 
-        /// <summary>
-        ///  Clean up any resources being used.
-        /// </summary>
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
@@ -22,10 +19,6 @@
 
         #region Windows Form Designer generated code
 
-        /// <summary>
-        ///  Required method for Designer support - do not modify
-        ///  the contents of this method with the code editor.
-        /// </summary>
         private void InitializeComponent()
         {
             DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
@@ -44,6 +37,7 @@
             btnCargarPrograma = new Button();
             btnEditarPrograma = new Button();
             btnGuardarArchivo = new Button();
+            btnAnalizar = new Button();
             lblNovaNyx = new Label();
             PicNovaNyx = new PictureBox();
             lblNovaNyxVersion = new Label();
@@ -53,11 +47,19 @@
             label4 = new Label();
             picLineas = new PictureBox();
             picLinea2 = new PictureBox();
+            grpArbolJerarquia = new GroupBox();
+            lblOperacionesCodigo = new Label();
+            cboOperacionesCodigo = new ComboBox();
+            lblEstadoSemantico = new Label();
+            tvArbolJerarquia = new TreeView();
+            lblPasosJerarquia = new Label();
+            rtbPasosJerarquia = new RichTextBox();
             ((System.ComponentModel.ISupportInitialize)dgtTablaDeSimbolos).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dgtErrores).BeginInit();
             ((System.ComponentModel.ISupportInitialize)PicNovaNyx).BeginInit();
             ((System.ComponentModel.ISupportInitialize)picLineas).BeginInit();
             ((System.ComponentModel.ISupportInitialize)picLinea2).BeginInit();
+            grpArbolJerarquia.SuspendLayout();
             SuspendLayout();
             // 
             // richArchivoDeTokens
@@ -131,10 +133,10 @@
             dgtErrores.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle2;
             dgtErrores.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgtErrores.Columns.AddRange(new DataGridViewColumn[] { Linea, Error });
-            dgtErrores.Location = new Point(600, 544);
+            dgtErrores.Location = new Point(600, 546);
             dgtErrores.Name = "dgtErrores";
             dgtErrores.RowHeadersWidth = 51;
-            dgtErrores.Size = new Size(603, 188);
+            dgtErrores.Size = new Size(881, 188);
             dgtErrores.TabIndex = 8;
             // 
             // Linea
@@ -193,14 +195,24 @@
             btnGuardarArchivo.UseVisualStyleBackColor = true;
             btnGuardarArchivo.Click += btnGuardarArchivo_Click;
             // 
+            // btnAnalizar
+            // 
+            btnAnalizar.Location = new Point(593, 432);
+            btnAnalizar.Name = "btnAnalizar";
+            btnAnalizar.Size = new Size(136, 48);
+            btnAnalizar.TabIndex = 22;
+            btnAnalizar.Text = "Analizar Todo";
+            btnAnalizar.UseVisualStyleBackColor = true;
+            btnAnalizar.Click += btnAnalizar_Click;
+            // 
             // lblNovaNyx
             // 
             lblNovaNyx.AutoSize = true;
-            lblNovaNyx.Font = new Font("Stencil", 25.8000011F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lblNovaNyx.Font = new Font("Stencil", 25.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
             lblNovaNyx.ForeColor = SystemColors.ActiveCaptionText;
             lblNovaNyx.Location = new Point(616, 9);
             lblNovaNyx.Name = "lblNovaNyx";
-            lblNovaNyx.Size = new Size(217, 52);
+            lblNovaNyx.Size = new Size(212, 51);
             lblNovaNyx.TabIndex = 13;
             lblNovaNyx.Text = "NovaNyx";
             // 
@@ -210,6 +222,7 @@
             PicNovaNyx.Location = new Point(616, 67);
             PicNovaNyx.Name = "PicNovaNyx";
             PicNovaNyx.Size = new Size(214, 158);
+            PicNovaNyx.SizeMode = PictureBoxSizeMode.StretchImage;
             PicNovaNyx.TabIndex = 14;
             PicNovaNyx.TabStop = false;
             // 
@@ -278,13 +291,96 @@
             picLinea2.TabIndex = 21;
             picLinea2.TabStop = false;
             // 
+            // grpArbolJerarquia
+            // 
+            grpArbolJerarquia.Controls.Add(lblOperacionesCodigo);
+            grpArbolJerarquia.Controls.Add(cboOperacionesCodigo);
+            grpArbolJerarquia.Controls.Add(lblEstadoSemantico);
+            grpArbolJerarquia.Controls.Add(tvArbolJerarquia);
+            grpArbolJerarquia.Controls.Add(lblPasosJerarquia);
+            grpArbolJerarquia.Controls.Add(rtbPasosJerarquia);
+            grpArbolJerarquia.Font = new Font("Arial", 10.2F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            grpArbolJerarquia.ForeColor = Color.DarkSlateBlue;
+            grpArbolJerarquia.Location = new Point(1400, 26);
+            grpArbolJerarquia.Name = "grpArbolJerarquia";
+            grpArbolJerarquia.Size = new Size(435, 708);
+            grpArbolJerarquia.TabIndex = 23;
+            grpArbolJerarquia.TabStop = false;
+            grpArbolJerarquia.Text = "Árbol de Jerarquía (Sincronizado)";
+            // 
+            // lblOperacionesCodigo
+            // 
+            lblOperacionesCodigo.AutoSize = true;
+            lblOperacionesCodigo.Font = new Font("Arial", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            lblOperacionesCodigo.ForeColor = Color.Black;
+            lblOperacionesCodigo.Location = new Point(15, 26);
+            lblOperacionesCodigo.Name = "lblOperacionesCodigo";
+            lblOperacionesCodigo.Size = new Size(245, 18);
+            lblOperacionesCodigo.TabIndex = 0;
+            lblOperacionesCodigo.Text = "Operaciones en Programa Fuente:";
+            // 
+            // cboOperacionesCodigo
+            // 
+            cboOperacionesCodigo.DropDownStyle = ComboBoxStyle.DropDownList;
+            cboOperacionesCodigo.Font = new Font("Consolas", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            cboOperacionesCodigo.FormattingEnabled = true;
+            cboOperacionesCodigo.Location = new Point(15, 48);
+            cboOperacionesCodigo.Name = "cboOperacionesCodigo";
+            cboOperacionesCodigo.Size = new Size(405, 26);
+            cboOperacionesCodigo.TabIndex = 1;
+            cboOperacionesCodigo.SelectedIndexChanged += cboOperacionesCodigo_SelectedIndexChanged;
+            // 
+            // lblEstadoSemantico
+            // 
+            lblEstadoSemantico.AutoSize = true;
+            lblEstadoSemantico.Font = new Font("Arial", 8.5F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            lblEstadoSemantico.ForeColor = Color.ForestGreen;
+            lblEstadoSemantico.Location = new Point(15, 82);
+            lblEstadoSemantico.Name = "lblEstadoSemantico";
+            lblEstadoSemantico.Size = new Size(245, 18);
+            lblEstadoSemantico.TabIndex = 2;
+            lblEstadoSemantico.Text = "Estado: Presiona 'Analizar Todo'";
+            // 
+            // tvArbolJerarquia
+            // 
+            tvArbolJerarquia.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            tvArbolJerarquia.Location = new Point(15, 106);
+            tvArbolJerarquia.Name = "tvArbolJerarquia";
+            tvArbolJerarquia.Size = new Size(405, 415);
+            tvArbolJerarquia.TabIndex = 3;
+            tvArbolJerarquia.AfterSelect += tvArbolJerarquia_AfterSelect;
+            // 
+            // lblPasosJerarquia
+            // 
+            lblPasosJerarquia.AutoSize = true;
+            lblPasosJerarquia.Font = new Font("Arial", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            lblPasosJerarquia.ForeColor = Color.Black;
+            lblPasosJerarquia.Location = new Point(15, 528);
+            lblPasosJerarquia.Name = "lblPasosJerarquia";
+            lblPasosJerarquia.Size = new Size(260, 18);
+            lblPasosJerarquia.TabIndex = 4;
+            lblPasosJerarquia.Text = "Pasos de Resolución por Jerarquía:";
+            // 
+            // rtbPasosJerarquia
+            // 
+            rtbPasosJerarquia.BackColor = Color.White;
+            rtbPasosJerarquia.Font = new Font("Consolas", 8.5F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            rtbPasosJerarquia.ForeColor = Color.FromArgb(30, 30, 30);
+            rtbPasosJerarquia.Location = new Point(15, 550);
+            rtbPasosJerarquia.Name = "rtbPasosJerarquia";
+            rtbPasosJerarquia.ReadOnly = true;
+            rtbPasosJerarquia.Size = new Size(405, 146);
+            rtbPasosJerarquia.TabIndex = 5;
+            rtbPasosJerarquia.Text = "";
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.AliceBlue;
             CancelButton = btnCargarPrograma;
-            ClientSize = new Size(1459, 764);
+            ClientSize = new Size(1855, 764);
+            Controls.Add(grpArbolJerarquia);
             Controls.Add(picLinea2);
             Controls.Add(picLineas);
             Controls.Add(label4);
@@ -298,6 +394,7 @@
             Controls.Add(btnEditarPrograma);
             Controls.Add(btnCargarPrograma);
             Controls.Add(btnGuardarPrograma);
+            Controls.Add(btnAnalizar);
             Controls.Add(dgtErrores);
             Controls.Add(dgtTablaDeSimbolos);
             Controls.Add(richProgramaFuente);
@@ -310,33 +407,45 @@
             ((System.ComponentModel.ISupportInitialize)PicNovaNyx).EndInit();
             ((System.ComponentModel.ISupportInitialize)picLineas).EndInit();
             ((System.ComponentModel.ISupportInitialize)picLinea2).EndInit();
+            grpArbolJerarquia.ResumeLayout(false);
+            grpArbolJerarquia.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
+
         }
 
         #endregion
-        private RichTextBox richArchivoDeTokens;
-        private RichTextBox richProgramaFuente;
-        private DataGridView dgtTablaDeSimbolos;
-        private DataGridViewTextBoxColumn Identificador;
-        private DataGridViewTextBoxColumn Nombre;
-        private DataGridViewTextBoxColumn TipoDato;
-        private DataGridViewTextBoxColumn Valor;
-        private DataGridView dgtErrores;
-        private DataGridViewTextBoxColumn Linea;
-        private DataGridViewTextBoxColumn Error;
-        private Button btnGuardarPrograma;
-        private Button btnCargarPrograma;
-        private Button btnEditarPrograma;
-        private Button btnGuardarArchivo;
-        private Label lblNovaNyx;
-        private PictureBox PicNovaNyx;
-        private Label lblNovaNyxVersion;
-        private Label label1;
-        private Label label2;
-        private Label label3;
-        private Label label4;
-        private PictureBox picLineas;
-        private PictureBox picLinea2;
+
+        private System.Windows.Forms.RichTextBox richArchivoDeTokens;
+        private System.Windows.Forms.RichTextBox richProgramaFuente;
+        private System.Windows.Forms.DataGridView dgtTablaDeSimbolos;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Identificador;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Nombre;
+        private System.Windows.Forms.DataGridViewTextBoxColumn TipoDato;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Valor;
+        private System.Windows.Forms.DataGridView dgtErrores;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Linea;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Error;
+        private System.Windows.Forms.Button btnGuardarPrograma;
+        private System.Windows.Forms.Button btnCargarPrograma;
+        private System.Windows.Forms.Button btnEditarPrograma;
+        private System.Windows.Forms.Button btnGuardarArchivo;
+        private System.Windows.Forms.Button btnAnalizar; // Instancia Nuevo botón
+        private System.Windows.Forms.Label lblNovaNyx;
+        private System.Windows.Forms.PictureBox PicNovaNyx;
+        private System.Windows.Forms.Label lblNovaNyxVersion;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.PictureBox picLineas;
+        private System.Windows.Forms.PictureBox picLinea2;
+        private System.Windows.Forms.GroupBox grpArbolJerarquia;
+        private System.Windows.Forms.Label lblOperacionesCodigo;
+        private System.Windows.Forms.ComboBox cboOperacionesCodigo;
+        private System.Windows.Forms.Label lblEstadoSemantico;
+        private System.Windows.Forms.TreeView tvArbolJerarquia;
+        private System.Windows.Forms.Label lblPasosJerarquia;
+        private System.Windows.Forms.RichTextBox rtbPasosJerarquia;
     }
 }
