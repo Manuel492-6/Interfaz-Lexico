@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,6 +16,7 @@ namespace Interfaz_Lexico
             set { _nodoInicial = value; }
         }
 
+        // Inicializa una nueva instancia de la lista simple ordenada con nodo inicial nulo ClaseListaSimpleOrdenada()
         public ClaseListaSimpleOrdenada()
         {
             NodoInicial = null;
@@ -26,6 +27,7 @@ namespace Interfaz_Lexico
             get { return (NodoInicial == null) ? true : false; }
         }
 
+        // Permite iterar secuencialmente a través de los elementos de la lista GetEnumerator()
         public IEnumerator<Tipo> GetEnumerator()
         {
 
@@ -52,6 +54,7 @@ namespace Interfaz_Lexico
 
         }
 
+        // Inserta un nuevo elemento en orden ascendente y valida duplicados Insertar()
         public void Insertar(Tipo Objeto)
         {
             if (Vacia)
@@ -116,6 +119,7 @@ namespace Interfaz_Lexico
             }
         }
 
+        // Busca y elimina un elemento de la lista retornando el dato eliminado Eliminar()
         public Tipo Eliminar(Tipo Objeto)
         {
             if (Vacia)
@@ -171,6 +175,7 @@ namespace Interfaz_Lexico
             }
         }
 
+        // Busca si un elemento existe en la lista y retorna verdadero o falso Buscar()
         public bool Buscar(Tipo Objeto)
         {
             if (Vacia)
@@ -220,10 +225,13 @@ namespace Interfaz_Lexico
                 }
             }
         }
+        // Libera todos los nodos y recursos al destruir la lista ~ClaseListaSimpleOrdenada()
         ~ClaseListaSimpleOrdenada()
         {
             Vaciar();
         }
+
+        // Elimina todos los nodos contenidos vaciando la lista enlazada Vaciar()
         public void Vaciar()
         {
             if (Vacia)

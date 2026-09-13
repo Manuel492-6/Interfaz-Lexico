@@ -5,6 +5,7 @@ namespace Interfaz_Lexico
         /// <summary>
         ///  The main entry point for the application.
         /// </summary>
+        // Punto de entrada principal para la aplicación e inicio del formulario Main()
         [STAThread]
         static void Main()
         {

@@ -52,11 +52,13 @@ namespace Interfaz_Lexico
          };
 
 
+        // Inicializa los componentes de la interfaz de usuario Form1()
         public Form1()
         {
             InitializeComponent();
         }
 
+        // Configura y carga el estado inicial de la aplicación, la base de datos y eventos Form1_Load()
         private void Form1_Load(object sender, EventArgs e)
         {
             try
@@ -84,6 +86,7 @@ namespace Interfaz_Lexico
             }
         }
 
+        // Valida léxicamente cada palabra de la línea contra la matriz de transiciones VerificarToken()
         private void VerificarToken(int i, List<string> Tokens)
         {
             string NuevoToken = "";
@@ -198,6 +201,7 @@ namespace Interfaz_Lexico
             palabras = null;
         }
 
+        // Consulta la base de datos SQL para cargar la matriz de transiciones y el alfabeto CargarEstructuraYDatosDesdeSQL()
         private void CargarEstructuraYDatosDesdeSQL()
         {
             using (SqlConnection conn = new SqlConnection(ConexionBD))
@@ -293,15 +297,13 @@ namespace Interfaz_Lexico
             }
         }
 
-        // Evento de cambio de texto en el Programa Fuente
+        // Redibuja los números de línea al modificarse el texto del programa fuente richProgramaFuente_TextChanged()
         private void richProgramaFuente_TextChanged(object sender, EventArgs e)
         {
             picLineas.Invalidate(); // Se actualizan las líneas del editor visualmente
         }
 
-        // =====================================================================
-        // BOTÓN PRINCIPAL DE ANÁLISIS (LÉXICO Y SINTÁCTICO)
-        // =====================================================================
+        // Ejecuta el análisis léxico, sintáctico y semántico del programa fuente btnAnalizar_Click()
         private void btnAnalizar_Click(object sender, EventArgs e)
         {
             // 1. Limpieza General
@@ -368,6 +370,7 @@ namespace Interfaz_Lexico
             dgtErrores.Rows.Add("Total de Errores", conteoErrores);
         }
 
+        // Inserta un error léxico con su línea en la tabla de errores y lo resalta AgregarErrores()
         private void AgregarErrores(string error, int linea)
         {
             error = Errores2.ContainsKey(error) ? Errores2[error] : "Error desconocido";
@@ -380,6 +383,7 @@ namespace Interfaz_Lexico
             }
         }
 
+        // Establece las propiedades de edición y visualización de las tablas DataGridView ConfigurarDataGridView()
         private void ConfigurarDataGridView()
         {
             dgtErrores.AllowUserToDeleteRows = false;
@@ -393,6 +397,7 @@ namespace Interfaz_Lexico
             dgtTablaDeSimbolos.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
         }
 
+        // Guarda el código escrito en el editor de texto en un archivo en disco btnGuardarPrograma_Click()
         private void btnGuardarPrograma_Click(object sender, EventArgs e)
         {
             Archivo<string> archivoTexto = new Archivo<string>(NombreArchivo);
@@ -413,6 +418,7 @@ namespace Interfaz_Lexico
             MessageBox.Show("Archivo guardado correctamente.");
         }
 
+        // Carga el contenido de un archivo de texto en el editor de código fuente btnCargarPrograma_Click()
         private void btnCargarPrograma_Click(object sender, EventArgs e)
         {
             Archivo<string> archivoTexto = new Archivo<string>(NombreArchivo);
@@ -438,6 +444,7 @@ namespace Interfaz_Lexico
             InicializarArbolEnEspera();
         }
 
+        // Habilita el cuadro de texto para permitir la edición del código fuente btnEditarPrograma_Click()
         private void btnEditarPrograma_Click(object sender, EventArgs e)
         {
             richProgramaFuente.ReadOnly = false;
@@ -445,6 +452,7 @@ namespace Interfaz_Lexico
             MessageBox.Show("El programa fuente ahora es editable.");
         }
 
+        // Guarda los tokens generados durante el análisis en un archivo de texto btnGuardarArchivo_Click()
         private void btnGuardarArchivo_Click(object sender, EventArgs e)
         {
             Archivo<string> archivoTexto = new Archivo<string>(NombreArchivo2);
@@ -465,6 +473,7 @@ namespace Interfaz_Lexico
             MessageBox.Show("Archivo guardado correctamente.");
         }
 
+        // Dibuja la numeración de líneas visibles en el editor de código fuente picLineas_Paint()
         private void picLineas_Paint(object sender, PaintEventArgs e)
         {
             int primerCaracterVisible = richProgramaFuente.GetCharIndexFromPosition(new System.Drawing.Point(0, 0));
@@ -486,6 +495,7 @@ namespace Interfaz_Lexico
             }
         }
 
+        // Dibuja la numeración de líneas visibles en el visor de tokens picLinea2_Paint()
         private void picLinea2_Paint(object sender, PaintEventArgs e)
         {
             int primerCaracterVisible = richArchivoDeTokens.GetCharIndexFromPosition(new System.Drawing.Point(0, 0));
@@ -507,14 +517,13 @@ namespace Interfaz_Lexico
             }
         }
 
+        // Solicita redibujar la numeración al cambiar el texto del visor de tokens richArchivoDeTokens_TextChanged()
         private void richArchivoDeTokens_TextChanged(object sender, EventArgs e)
         {
             picLinea2.Invalidate();
         }
 
-        /// <summary>
-        /// Compila y genera el Árbol de Jerarquía al presionar el botón 'Analizar Todo'
-        /// </summary>
+        // Compila y visualiza el árbol jerárquico de operadores y la semántica CompilarArbolJerarquia()
         public void CompilarArbolJerarquia(AnalizadorSintactico? sintactico = null)
         {
             // Registrar variables de la tabla de símbolos si existen y aún no están registradas
@@ -576,10 +585,7 @@ namespace Interfaz_Lexico
             }
         }
 
-        /// <summary>
-        /// Sincroniza la tabla de símbolos (ListaDeIdentificadoresOrdenada y dgtTablaDeSimbolos)
-        /// con los tipos de datos y valores determinados por el analizador semántico y el árbol jerárquico.
-        /// </summary>
+        // Sincroniza la tabla de símbolos con los tipos y valores del analizador semántico ActualizarTablaDeSimbolos()
         private void ActualizarTablaDeSimbolos()
         {
             if (!ListaDeIdentificadoresOrdenada.Vacia)
@@ -616,9 +622,7 @@ namespace Interfaz_Lexico
             }
         }
 
-        /// <summary>
-        /// Establece el árbol en estado de espera inicial hasta presionar 'Analizar Todo'
-        /// </summary>
+        // Coloca el TreeView y los controles de jerarquía en estado de espera inicial InicializarArbolEnEspera()
         private void InicializarArbolEnEspera()
         {
             tvArbolJerarquia.BeginUpdate();
@@ -641,6 +645,7 @@ namespace Interfaz_Lexico
             rtbPasosJerarquia.Clear();
         }
 
+        // Muestra los pasos de evaluación por jerarquía y el resultado de la operación MostrarPasosOperacion()
         private void MostrarPasosOperacion(ResultadoSemanticoOperacion op)
         {
             rtbPasosJerarquia.Clear();
@@ -685,6 +690,7 @@ namespace Interfaz_Lexico
             }
         }
 
+        // Actualiza los pasos mostrados al cambiar de operación seleccionada en el combo cboOperacionesCodigo_SelectedIndexChanged()
         private void cboOperacionesCodigo_SelectedIndexChanged(object sender, EventArgs e)
         {
             int idx = cboOperacionesCodigo.SelectedIndex;
@@ -694,6 +700,7 @@ namespace Interfaz_Lexico
             }
         }
 
+        // Sincroniza la selección en el árbol con los pasos detallados de la operación tvArbolJerarquia_AfterSelect()
         private void tvArbolJerarquia_AfterSelect(object sender, TreeViewEventArgs e)
         {
             if (e.Node == null) return;

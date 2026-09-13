@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Text.Json; 
 
@@ -35,21 +35,25 @@ internal class Archivo<Tipo>
         }
     }
 
+    // Crea un nuevo archivo en el sistema de archivos con permisos de lectura y escritura Crear()
     private void Crear()
     {
         this.Flujo = new FileStream(NombreArchivo, FileMode.Create, FileAccess.ReadWrite);
     }
 
+    // Constructor que asigna la ruta o nombre del archivo Archivo()
     public Archivo(string strArchivo)
     {
         this.NombreArchivo = strArchivo;
     }
 
+    // Libera los recursos y cierra el flujo al destruir el objeto ~Archivo()
     ~Archivo()
     {
         CerrarArchivo();
     }
 
+    // Abre el archivo en modo de escritura preparando el escritor StreamWriter HacerModoEscritura()
     public void HacerModoEscritura()
     {
         if (File.Exists(NombreArchivo))
@@ -65,6 +69,7 @@ internal class Archivo<Tipo>
         Escritor.AutoFlush = true; // Importante para que los datos se guarden al instante
     }
 
+    // Abre el archivo en modo de lectura preparando el lector StreamReader HacerModoLectura()
     public void HacerModoLectura()
     {
         if (File.Exists(NombreArchivo))
@@ -80,6 +85,7 @@ internal class Archivo<Tipo>
         Lector = new StreamReader(Flujo);
     }
 
+    // Serializa un objeto a JSON y lo escribe como una línea en el archivo AgregarObjeto()
     public void AgregarObjeto(Tipo Objeto)
     {
         if (Escritor == null) throw new InvalidOperationException("El archivo no está en modo escritura.");
@@ -89,6 +95,7 @@ internal class Archivo<Tipo>
         Escritor.WriteLine(json);
     }
 
+    // Lee una línea de texto en formato JSON y la deserializa al tipo de objeto original LeerObjeto()
     public Tipo LeerObjeto()
     {
         if (Lector == null) throw new InvalidOperationException("El archivo no está en modo lectura.");
@@ -102,6 +109,7 @@ internal class Archivo<Tipo>
         return JsonSerializer.Deserialize<Tipo>(json);
     }
 
+    // Cierra de forma segura el lector, escritor y flujo del archivo CerrarArchivo()
     public void CerrarArchivo()
     {
         // Es importante cerrar los Writers/Readers, ellos se encargarán de cerrar el Flujo base
@@ -110,6 +118,7 @@ internal class Archivo<Tipo>
         Flujo?.Close();
     }
 
+    // Cierra el archivo y lo elimina del sistema de archivos EliminarArchivo()
     public void EliminarArchivo()
     {
         CerrarArchivo(); // Siempre cierra antes de eliminar para liberar el archivo en Windows

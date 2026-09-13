@@ -21,8 +21,10 @@ namespace Interfaz_Lexico
         public bool TieneError { get; set; } = false;
         public string? MensajeError { get; set; }
 
+        // Inicializa una nueva instancia vacía de un nodo jerárquico NodoJerarquia()
         public NodoJerarquia() { }
 
+        // Inicializa un nodo jerárquico con su información léxica, sintáctica y semántica NodoJerarquia()
         public NodoJerarquia(string lexema, string tipoNodo, int nivel, string descripcion, string tipoDato = "desconocido")
         {
             Lexema = lexema;
@@ -32,6 +34,7 @@ namespace Interfaz_Lexico
             TipoDato = tipoDato;
         }
 
+        // Convierte el nodo y sus subárboles en un TreeNode formateado con colores e iconos ToTreeNode()
         public TreeNode ToTreeNode()
         {
             string textoNodo;

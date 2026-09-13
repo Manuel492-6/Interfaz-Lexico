@@ -36,6 +36,7 @@ namespace Interfaz_Lexico
         private Dictionary<string, string> tablaTipos = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         private Dictionary<string, string> tablaValores = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
+        // Inicializa una nueva instancia del analizador semántico con la tabla de tipos AnalizadorSemanticoJerarquia()
         public AnalizadorSemanticoJerarquia(Dictionary<string, string>? variablesConTipo = null)
         {
             if (variablesConTipo != null)
@@ -47,6 +48,7 @@ namespace Interfaz_Lexico
             }
         }
 
+        // Registra o actualiza el tipo de dato y valor de una variable en las tablas de símbolos RegistrarVariable()
         public void RegistrarVariable(string nombre, string tipoDato, string? valor = null)
         {
             if (!string.IsNullOrEmpty(tipoDato))
@@ -59,34 +61,37 @@ namespace Interfaz_Lexico
             }
         }
 
+        // Verifica si una variable se encuentra registrada con un tipo válido en la tabla TieneVariable()
         public bool TieneVariable(string nombre)
         {
             return tablaTipos.ContainsKey(nombre) && !string.IsNullOrEmpty(tablaTipos[nombre]) && tablaTipos[nombre] != "Null";
         }
 
+        // Obtiene el tipo de dato registrado correspondiente al nombre de una variable ObtenerTipo()
         public string ObtenerTipo(string nombre)
         {
             return ObtenerTipoVariable(nombre);
         }
 
+        // Obtiene el valor actual calculado o asignado a una variable ObtenerValor()
         public string? ObtenerValor(string nombre)
         {
             return ObtenerValorVariable(nombre);
         }
 
+        // Retorna una copia de la tabla de tipos de datos de las variables ObtenerTablaTipos()
         public Dictionary<string, string> ObtenerTablaTipos()
         {
             return new Dictionary<string, string>(tablaTipos, StringComparer.OrdinalIgnoreCase);
         }
 
+        // Retorna una copia de la tabla de valores de las variables ObtenerTablaValores()
         public Dictionary<string, string> ObtenerTablaValores()
         {
             return new Dictionary<string, string>(tablaValores, StringComparer.OrdinalIgnoreCase);
         }
 
-        /// <summary>
-        /// Analiza semánticamente cualquier expresión de texto respetando estrictamente la jerarquía de operadores
-        /// </summary>
+        // Analiza semánticamente una expresión según la jerarquía de operadores y genera su árbol y pasos AnalizarExpresion()
         public ResultadoSemanticoOperacion AnalizarExpresion(string expresionTexto, int linea = 1)
         {
             errores.Clear();
@@ -143,9 +148,7 @@ namespace Interfaz_Lexico
             return resultado;
         }
 
-        /// <summary>
-        /// Analiza tokens ya reconocidos por el analizador sintáctico del compilador
-        /// </summary>
+        // Convierte una lista de tokens sintácticos a texto y los analiza semánticamente AnalizarTokensCompilador()
         public ResultadoSemanticoOperacion AnalizarTokensCompilador(List<TokenSintactico> tokensSintacticos)
         {
             StringBuilder sb = new StringBuilder();
@@ -172,6 +175,7 @@ namespace Interfaz_Lexico
 
         #region Tokenizador de Expresiones
 
+        // Convierte la cadena de entrada en una lista de tokens semánticos clasificados Tokenizar()
         private List<TokenSemantico> Tokenizar(string entrada, int linea)
         {
             List<TokenSemantico> list = new List<TokenSemantico>();
@@ -340,6 +344,7 @@ namespace Interfaz_Lexico
             return list;
         }
 
+        // Comprueba que los paréntesis de apertura y cierre se encuentren balanceados VerificarBalanceParentesis()
         private void VerificarBalanceParentesis()
         {
             int balance = 0;
@@ -366,7 +371,7 @@ namespace Interfaz_Lexico
 
         #region Parser de Jerarquía de Operaciones
 
-        // Nivel 7: Asignación (=)
+        // Parsea una asignación de variable en el nivel 7 de jerarquía ParsearAsignacion()
         private NodoJerarquia ParsearAsignacion()
         {
             // Mirar si es una asignación: ID = Expresion
@@ -391,7 +396,7 @@ namespace Interfaz_Lexico
             return ParsearLogico();
         }
 
-        // Nivel 6: Operadores Lógicos (OR, AND, NOT / ||, &&, !)
+        // Parsea expresiones con operadores lógicos en el nivel 6 de jerarquía ParsearLogico()
         private NodoJerarquia ParsearLogico()
         {
             NodoJerarquia izquierdo = ParsearRelacional();
@@ -414,7 +419,7 @@ namespace Interfaz_Lexico
             return izquierdo;
         }
 
-        // Nivel 5: Operadores Relacionales (<, <=, >, >=, ==, !=)
+        // Parsea comparaciones con operadores relacionales en el nivel 5 de jerarquía ParsearRelacional()
         private NodoJerarquia ParsearRelacional()
         {
             NodoJerarquia izquierdo = ParsearSumaResta();
@@ -439,7 +444,7 @@ namespace Interfaz_Lexico
             return izquierdo;
         }
 
-        // Nivel 4: Suma y Resta (+, -)
+        // Parsea sumas y restas en el nivel 4 de la jerarquía de operadores ParsearSumaResta()
         private NodoJerarquia ParsearSumaResta()
         {
             NodoJerarquia izquierdo = ParsearMultiplicacionDivision();
@@ -462,7 +467,7 @@ namespace Interfaz_Lexico
             return izquierdo;
         }
 
-        // Nivel 3: Multiplicación, División y Módulo (*, /, %)
+        // Parsea multiplicaciones, divisiones y módulos en el nivel 3 de jerarquía ParsearMultiplicacionDivision()
         private NodoJerarquia ParsearMultiplicacionDivision()
         {
             NodoJerarquia izquierdo = ParsearPotencia();
@@ -504,7 +509,7 @@ namespace Interfaz_Lexico
             return izquierdo;
         }
 
-        // Nivel 2: Potenciación (^) y Operadores Unarios (+, -)
+        // Parsea potenciación y operadores unarios en el nivel 2 de jerarquía ParsearPotencia()
         private NodoJerarquia ParsearPotencia()
         {
             // Operadores unarios (+ o -): ej. -(a + b), +(a + b), -x, +x, -9, +5
@@ -548,7 +553,7 @@ namespace Interfaz_Lexico
             return primario;
         }
 
-        // Nivel 1: Paréntesis (Máxima Prioridad) y Operandos Hojas (Constantes e Identificadores)
+        // Parsea operandos primarios, constantes, variables o subexpresiones entre paréntesis ParsearPrimario()
         private NodoJerarquia ParsearPrimario()
         {
             if (pos >= tokens.Count)
@@ -636,6 +641,7 @@ namespace Interfaz_Lexico
 
         #region Verificación Semántica de Tipos y Pasos de Reducción
 
+        // Consulta el tipo de dato asignado a una variable en la tabla interna ObtenerTipoVariable()
         private string ObtenerTipoVariable(string nombreVar)
         {
             if (tablaTipos.TryGetValue(nombreVar, out string? tipo) && !string.IsNullOrEmpty(tipo) && tipo != "Null")
@@ -645,6 +651,7 @@ namespace Interfaz_Lexico
             return "int"; // Por defecto numérico entero
         }
 
+        // Consulta el valor almacenado de una variable en la tabla interna ObtenerValorVariable()
         private string? ObtenerValorVariable(string nombreVar)
         {
             if (tablaValores.TryGetValue(nombreVar, out string? val) && !string.IsNullOrEmpty(val))
@@ -654,6 +661,7 @@ namespace Interfaz_Lexico
             return null;
         }
 
+        // Realiza inferencia de tipos y calcula el valor resultante en cada nodo del árbol InferirTiposYValores()
         private void InferirTiposYValores(NodoJerarquia nodo)
         {
             if (nodo == null) return;
@@ -776,6 +784,7 @@ namespace Interfaz_Lexico
             }
         }
 
+        // Formatea un número numérico incluyendo explícitamente su signo (+/-) FormatearNumeroConSigno()
         private string FormatearNumeroConSigno(double valor, bool esEntero)
         {
             if (esEntero)
@@ -790,6 +799,7 @@ namespace Interfaz_Lexico
             }
         }
 
+        // Recorre el árbol en post-orden generando los pasos secuenciales de resolución GenerarPasosJerarquia()
         private void GenerarPasosJerarquia(NodoJerarquia nodo)
         {
             if (nodo == null) return;
@@ -827,6 +837,7 @@ namespace Interfaz_Lexico
             }
         }
 
+        // Registra un error semántico con su línea correspondiente en la lista de errores ReportarError()
         private void ReportarError(string mensaje, int linea = 1)
         {
             errores.Add($"Línea {linea}: Error Semántico: {mensaje}");
@@ -834,9 +845,7 @@ namespace Interfaz_Lexico
 
         #endregion
 
-        /// <summary>
-        /// Rellena el TreeView visual con la estructura jerárquica
-        /// </summary>
+        // Carga y despliega visualmente el árbol jerárquico de una operación en el TreeView CargarArbolEnTreeView()
         public void CargarArbolEnTreeView(TreeView tv, NodoJerarquia? raiz, string tituloOperacion)
         {
             tv.BeginUpdate();
@@ -865,9 +874,7 @@ namespace Interfaz_Lexico
             tv.EndUpdate();
         }
 
-        /// <summary>
-        /// Escanea el código fuente completo del Programa Fuente y extrae todas las operaciones
-        /// </summary>
+        // Escanea el código fuente completo y extrae todas las operaciones a evaluar ExtraerOperacionesDeCodigoFuente()
         public List<ResultadoSemanticoOperacion> ExtraerOperacionesDeCodigoFuente(string codigoFuente)
         {
             List<ResultadoSemanticoOperacion> lista = new List<ResultadoSemanticoOperacion>();
@@ -993,9 +1000,7 @@ namespace Interfaz_Lexico
             return lista;
         }
 
-        /// <summary>
-        /// Rellena el TreeView visual con todas las operaciones del Programa Fuente de forma sincronizada
-        /// </summary>
+        // Despliega todas las operaciones analizadas de forma sincronizada en el TreeView CargarArbolSincronizado()
         public void CargarArbolSincronizado(TreeView tv, List<ResultadoSemanticoOperacion> operaciones)
         {
             tv.BeginUpdate();

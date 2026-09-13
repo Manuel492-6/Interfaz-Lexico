@@ -8,6 +8,7 @@ namespace Interfaz_Lexico
     {
         private System.ComponentModel.IContainer components = null;
 
+        // Libera los recursos no administrados utilizados por el formulario Dispose()
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
@@ -19,6 +20,7 @@ namespace Interfaz_Lexico
 
         #region Windows Form Designer generated code
 
+        // Inicializa y configura los controles visuales y propiedades del formulario InitializeComponent()
         private void InitializeComponent()
         {
             DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();

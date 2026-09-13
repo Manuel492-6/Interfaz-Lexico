@@ -20,6 +20,7 @@ namespace Interfaz_Lexico
         private AnalizadorSemanticoJerarquia semantico;
         public List<ResultadoSemanticoOperacion> OperacionesDetectadas { get; } = new List<ResultadoSemanticoOperacion>();
 
+        // Inicializa una nueva instancia del analizador sintáctico con los tokens y la tabla de errores AnalizadorSintactico()
         public AnalizadorSintactico(List<TokenSintactico> tokens, DataGridView dgtErrores, AnalizadorSemanticoJerarquia? semantico = null)
         {
             this.tokens = tokens;
@@ -28,6 +29,7 @@ namespace Interfaz_Lexico
             this.semantico = semantico ?? new AnalizadorSemanticoJerarquia();
         }
 
+        // Inicia el análisis sintáctico del programa verificando inicio, cuerpo y fin ParsearPrograma()
         public void ParsearPrograma()
         {
             if (pos >= tokens.Count) return;
@@ -39,7 +41,7 @@ namespace Interfaz_Lexico
             if (pos < tokens.Count && !Match("RW02", "END")) ReportarError("Se esperaba el fin del programa (END / RW02).");
         }
 
-        // Modificamos este método para aceptar tokens de parada opcionales (ej. detenerse al ver WHILE o UNTIL)
+        // Procesa secuencialmente las instrucciones del bloque hasta encontrar un token de fin ParsearInstrucciones()
         private void ParsearInstrucciones(params string[] stopTokensAdicionales)
         {
             while (pos < tokens.Count && !EsFinDeBloque(stopTokensAdicionales))
@@ -48,6 +50,7 @@ namespace Interfaz_Lexico
             }
         }
 
+        // Determina si el token actual representa el cierre de un bloque de código EsFinDeBloque()
         private bool EsFinDeBloque(string[] stopTokensAdicionales)
         {
             if (pos >= tokens.Count) return true;
@@ -73,6 +76,7 @@ namespace Interfaz_Lexico
                    t.StartsWith("ENDCASE");
         }
 
+        // Identifica y analiza la sintaxis de una instrucción específica según su token ParsearInstruccion()
         private void ParsearInstruccion()
         {
             if (pos >= tokens.Count) return;
@@ -231,6 +235,7 @@ namespace Interfaz_Lexico
             Match("DEL", "SC;");
         }
 
+        // Analiza y valida una condición lógica o relacional compuesta ParsearCondicion()
         private void ParsearCondicion()
         {
             int inicioCond = pos;
@@ -252,6 +257,7 @@ namespace Interfaz_Lexico
             }
         }
 
+        // Analiza expresiones compuestas por términos separados por suma o resta ParsearExpresion()
         private void ParsearExpresion()
         {
             ParsearTermino();
@@ -262,6 +268,7 @@ namespace Interfaz_Lexico
             }
         }
 
+        // Analiza términos compuestos por factores separados por multiplicación, división o módulo ParsearTermino()
         private void ParsearTermino()
         {
             ParsearPotencia();
@@ -272,6 +279,7 @@ namespace Interfaz_Lexico
             }
         }
 
+        // Analiza operaciones de potencia respetando la jerarquía de operadores ParsearPotencia()
         private void ParsearPotencia()
         {
             ParsearFactor();
@@ -282,6 +290,7 @@ namespace Interfaz_Lexico
             }
         }
 
+        // Analiza factores primarios como constantes, variables, signos unarios o subexpresiones ParsearFactor()
         private void ParsearFactor()
         {
             if (pos >= tokens.Count) return;
@@ -303,6 +312,7 @@ namespace Interfaz_Lexico
             }
         }
 
+        // Envía una lista de tokens al analizador semántico y registra los errores detectados VerificarSemanticaOperacion()
         private void VerificarSemanticaOperacion(List<TokenSintactico> tokensOp)
         {
             if (tokensOp == null || tokensOp.Count == 0) return;
@@ -317,6 +327,7 @@ namespace Interfaz_Lexico
             }
         }
 
+        // Comprueba si el tipo del token actual coincide con alguno de los esperados y avanza Match()
         private bool Match(params string[] esperados)
         {
             if (pos >= tokens.Count) return false;
@@ -332,6 +343,7 @@ namespace Interfaz_Lexico
             return false;
         }
 
+        // Registra un error sintáctico con su línea en la tabla visual de errores ReportarError()
         private void ReportarError(string mensaje)
         {
             int lineaError = pos < tokens.Count ? tokens[pos].Linea : (tokens.LastOrDefault()?.Linea ?? 0);
@@ -342,6 +354,7 @@ namespace Interfaz_Lexico
                 dgtErrores.Rows[lastRow].DefaultCellStyle.BackColor = System.Drawing.Color.Orange;
         }
 
+        // Registra un error semántico con su línea en la tabla visual de errores ReportarErrorSemantico()
         private void ReportarErrorSemantico(string mensaje, int linea)
         {
             dgtErrores.Rows.Add(linea, mensaje);

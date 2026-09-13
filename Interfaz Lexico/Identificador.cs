@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -41,11 +41,13 @@ namespace Interfaz_Lexico
 		}
 
 
+		// Compara si dos identificadores son iguales según su nombre Equals()
 		public bool Equals(Identificador other)
 		{
 			return this.Nombre.Equals(other.Nombre);
         }
 
+		// Compara dos identificadores en base a su número de identificador CompareTo()
 		public int CompareTo(Identificador other)
 		{
 			return this.NumeroDeIdentificador.CompareTo(other.NumeroDeIdentificador);

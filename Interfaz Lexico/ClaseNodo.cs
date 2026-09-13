@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -32,6 +32,7 @@ namespace Interfaz_Lexico
             set { _siguiente = value; }
         }
 
+        // Libera la referencia del objeto almacenado al destruir el nodo ~ClaseNodo()
         ~ClaseNodo()
         {
             ObjetoConDatos = default(Tipo);
