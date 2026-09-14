@@ -29,16 +29,90 @@ namespace Interfaz_Lexico
             this.semantico = semantico ?? new AnalizadorSemanticoJerarquia();
         }
 
+        // Helper para comprobar si un token es un delimitador (DEL o SC;)
+        private bool EsDelimitador(TokenSintactico tok)
+        {
+            if (tok == null) return false;
+            return tok.Tipo.StartsWith("DEL") || tok.Tipo.StartsWith("SC;") || tok.Lexema == ";";
+        }
+
+        // Consume el delimitador si está presente (y cualquier delimitador consecutivo adicional)
+        private bool MatchDelimitador()
+        {
+            if (pos >= tokens.Count) return false;
+            if (EsDelimitador(tokens[pos]))
+            {
+                while (pos < tokens.Count && EsDelimitador(tokens[pos]))
+                {
+                    pos++;
+                }
+                return true;
+            }
+            return false;
+        }
+
+        // Exige la presencia obligatoria de un delimitador ';' y reporta error si falta
+        private void ExigirDelimitador(string contexto = "")
+        {
+            if (!MatchDelimitador())
+            {
+                string msg = string.IsNullOrEmpty(contexto)
+                    ? "Se esperaba delimitador ';' (DEL) al final de la instrucción."
+                    : $"Se esperaba delimitador ';' (DEL) al final de {contexto}.";
+                ReportarError(msg);
+            }
+        }
+
+        // Modo pánico: descarta tokens hasta el siguiente delimitador o cierre de bloque para evitar cascada de errores
+        private void SincronizarHastaDelimitador()
+        {
+            while (pos < tokens.Count && !EsDelimitador(tokens[pos]) && !EsFinDeBloque())
+            {
+                pos++;
+            }
+            if (pos < tokens.Count && EsDelimitador(tokens[pos]))
+            {
+                pos++;
+            }
+        }
+
         // Inicia el análisis sintáctico del programa verificando inicio, cuerpo y fin ParsearPrograma()
         public void ParsearPrograma()
         {
-            if (pos >= tokens.Count) return;
+            // Ignorar delimitadores previos si los hubiera al inicio
+            while (pos < tokens.Count && EsDelimitador(tokens[pos])) pos++;
 
-            if (!Match("RW01", "START")) ReportarError("Se esperaba el inicio del programa (START / RW01).");
+            if (pos >= tokens.Count)
+            {
+                ReportarError("El programa está vacío. Se esperaba el inicio del programa (START / RW01).");
+                return;
+            }
+
+            if (!Match("RW01", "START"))
+            {
+                ReportarError("Se esperaba el inicio del programa (START / RW01).");
+            }
+            // Consumir delimitador opcional tras START (Diagrama IN01: START DEL)
+            MatchDelimitador();
 
             ParsearInstrucciones();
 
-            if (pos < tokens.Count && !Match("RW02", "END")) ReportarError("Se esperaba el fin del programa (END / RW02).");
+            if (!Match("RW02", "END"))
+            {
+                ReportarError("Se esperaba el fin del programa (END / RW02).");
+            }
+            // Consumir delimitador opcional tras END (Diagrama IN02: END DEL)
+            MatchDelimitador();
+
+            // Ignorar delimitadores finales si los hubiera
+            while (pos < tokens.Count && EsDelimitador(tokens[pos])) pos++;
+
+            // Verificar si hay tokens no válidos después del fin del programa
+            if (pos < tokens.Count)
+            {
+                ReportarError($"Se encontraron tokens no válidos fuera de la estructura principal del programa (después de END): '{tokens[pos].Lexema}'.");
+                pos = tokens.Count;
+            }
         }
 
         // Procesa secuencialmente las instrucciones del bloque hasta encontrar un token de fin ParsearInstrucciones()
@@ -51,38 +125,50 @@ namespace Interfaz_Lexico
         }
 
         // Determina si el token actual representa el cierre de un bloque de código EsFinDeBloque()
-        private bool EsFinDeBloque(string[] stopTokensAdicionales)
+        private bool EsFinDeBloque(string[]? stopTokensAdicionales = null)
         {
             if (pos >= tokens.Count) return true;
             string t = tokens[pos].Tipo;
+            string l = tokens[pos].Lexema;
 
-            // Si le mandamos un token de parada (como el WHILE de un DO WHILE), detiene el bloque de instrucciones
+            // Si le mandamos un token de parada (como el WHILE de un DO WHILE o UNTIL de EXECUTE), detiene el bloque de instrucciones
             if (stopTokensAdicionales != null)
             {
                 foreach (string stop in stopTokensAdicionales)
                 {
-                    if (t.StartsWith(stop)) return true;
+                    if (t.StartsWith(stop) || l.Equals(stop, StringComparison.OrdinalIgnoreCase)) return true;
                 }
             }
 
-            return t.StartsWith("RW02") || t.StartsWith("RW07") || t.StartsWith("RW09") || t.StartsWith("RW13") ||
-                   t.StartsWith("RW24") || t.StartsWith("RW25") || t.StartsWith("RW32") ||
-                   t.StartsWith("END") ||
-                   t.StartsWith("ENDFOR") || /*t.StartsWith("RW18") ||*/
-                   t.StartsWith("ENDDO") || t.StartsWith("RW19") ||
-                   t.StartsWith("ENDEXECUTE") || t.StartsWith("RW23") ||
-                   t.StartsWith("CASE") || t.StartsWith("RW11") ||
-                   t.StartsWith("NONE") || t.StartsWith("RW12") ||
-                   t.StartsWith("ENDCASE");
+            // Palabras de cierre de bloque válidas en NovaNyx 1.4.2
+            return t.StartsWith("RW02") || l.Equals("END", StringComparison.OrdinalIgnoreCase) ||
+                   t.StartsWith("RW07") || l.Equals("ELSE", StringComparison.OrdinalIgnoreCase) ||
+                   t.StartsWith("RW08") || l.Equals("FALSE", StringComparison.OrdinalIgnoreCase) ||
+                   t.StartsWith("RW09") || l.Equals("ENDIF", StringComparison.OrdinalIgnoreCase) ||
+                   t.StartsWith("RW11") || l.Equals("CASE", StringComparison.OrdinalIgnoreCase) ||
+                   t.StartsWith("RW12") || l.Equals("NONE", StringComparison.OrdinalIgnoreCase) ||
+                   t.StartsWith("RW13") || l.Equals("ENDCASE", StringComparison.OrdinalIgnoreCase) ||
+                   t.StartsWith("RW19") || l.Equals("ENDFOR", StringComparison.OrdinalIgnoreCase) ||
+                   t.StartsWith("RW23") || l.Equals("ENDDO", StringComparison.OrdinalIgnoreCase) ||
+                   t.StartsWith("RW24") || l.Equals("ENDWHILE", StringComparison.OrdinalIgnoreCase);
         }
 
         // Identifica y analiza la sintaxis de una instrucción específica según su token ParsearInstruccion()
         private void ParsearInstruccion()
         {
             if (pos >= tokens.Count) return;
-            string t = tokens[pos].Tipo;
 
-            // 1. Asignación
+            // Delimitador suelto o repetido (ej. ;) se consume sin romper la sintaxis
+            if (EsDelimitador(tokens[pos]))
+            {
+                pos++;
+                return;
+            }
+
+            string t = tokens[pos].Tipo;
+            string l = tokens[pos].Lexema;
+
+            // 1. Asignación (Diagrama ASIGN: IDV ALO= ARG4 DEL)
             if (t.StartsWith("IDV"))
             {
                 int inicioOp = pos;
@@ -90,83 +176,193 @@ namespace Interfaz_Lexico
                 if (!Match("ALO=", "=")) ReportarError("Se esperaba operador de asignación (ALO= o =).");
                 ParsearExpresion();
                 int finOp = pos;
-                VerificarSemanticaOperacion(tokens.GetRange(inicioOp, finOp - inicioOp));
+                if (finOp > inicioOp)
+                {
+                    VerificarSemanticaOperacion(tokens.GetRange(inicioOp, finOp - inicioOp));
+                }
+                ExigirDelimitador("la asignación");
             }
-            // 2. Lectura (READ) - RW03
-            else if (t.StartsWith("RW03") || t.StartsWith("READ"))
+            // 2. Lectura (READ) - RW03 / Diagrama IN04: READ ARG4 (, ARG4)* DEL
+            else if (t.StartsWith("RW03") || l.Equals("READ", StringComparison.OrdinalIgnoreCase))
             {
                 Match("RW03", "READ");
                 if (!Match("IDV") && !Match("NUC") && !Match("INC") && !Match("RNC") && !Match("STR"))
-                    ReportarError("Se esperaba un argumento válido para leer (IDV, NUC, STR).");
+                {
+                    ReportarError("Se esperaba un argumento válido para leer (IDV, NUC).");
+                }
+
+                // Múltiples argumentos separados por coma según diagrama IN04: (, ARG4)*
+                while (pos < tokens.Count && (tokens[pos].Tipo.StartsWith("SC,") || tokens[pos].Lexema == ","))
+                {
+                    pos++;
+                    if (!Match("IDV") && !Match("NUC") && !Match("INC") && !Match("RNC") && !Match("STR"))
+                    {
+                        ReportarError("Se esperaba un argumento válido después de la coma en READ.");
+                    }
+                }
+                ExigirDelimitador("la instrucción READ");
             }
-            // 3. Escritura (PRINT) - RW04
-            else if (t.StartsWith("RW04") || t.StartsWith("PRINT"))
+            // 3. Escritura (PRINT) - RW04 / Diagrama IN03: PRINT ARG3 (, ARG3)* DEL
+            else if (t.StartsWith("RW04") || l.Equals("PRINT", StringComparison.OrdinalIgnoreCase))
             {
                 Match("RW04", "PRINT");
                 int inicioOp = pos;
                 ParsearExpresion();
                 int finOp = pos;
-                VerificarSemanticaOperacion(tokens.GetRange(inicioOp, finOp - inicioOp));
+                if (finOp > inicioOp)
+                {
+                    VerificarSemanticaOperacion(tokens.GetRange(inicioOp, finOp - inicioOp));
+                }
+
+                // Múltiples argumentos separados por coma según diagrama IN03: (, ARG3)*
+                while (pos < tokens.Count && (tokens[pos].Tipo.StartsWith("SC,") || tokens[pos].Lexema == ","))
+                {
+                    pos++;
+                    int inicioArg = pos;
+                    ParsearExpresion();
+                    int finArg = pos;
+                    if (finArg > inicioArg)
+                    {
+                        VerificarSemanticaOperacion(tokens.GetRange(inicioArg, finArg - inicioArg));
+                    }
+                }
+                ExigirDelimitador("la instrucción PRINT");
             }
-            // 4. Estructura IF
-            else if (t.StartsWith("RW05") || t.StartsWith("IF"))
+            // 4. Estructura IF (RW05) / Diagrama IN05
+            else if (t.StartsWith("RW05") || l.Equals("IF", StringComparison.OrdinalIgnoreCase))
             {
                 Match("RW05", "IF");
                 ParsearCondicion();
                 if (!Match("RW06", "THEN")) ReportarError("Se esperaba instrucción THEN (RW06).");
+                MatchDelimitador();
 
                 ParsearInstrucciones();
 
-                if (Match("RW07", "ELSE")) ParsearInstrucciones();
-
-                if (!Match("RW09", "ENDIF")) ReportarError("Se esperaba cierre ENDIF (RW09).");
-            }
-            // 5. Estructura PERHAPS
-            else if (t.StartsWith("RW10") || t.StartsWith("PERHAPS"))
-            {
-                Match("RW10", "PERHAPS");
-                ParsearExpresion();
-                Match("DEL");
-
-                while (pos < tokens.Count && (tokens[pos].Tipo.StartsWith("RW11") || tokens[pos].Tipo.StartsWith("CASE")))
+                if (Match("RW07", "ELSE") || Match("RW08", "FALSE"))
                 {
-                    Match("RW11", "CASE");
-                    ParsearExpresion();
-                    Match("DEL");
+                    MatchDelimitador(); // Diagrama IN05_2: ELSE DEL
                     ParsearInstrucciones();
                 }
 
-                if (pos < tokens.Count && (tokens[pos].Tipo.StartsWith("RW12") || tokens[pos].Tipo.StartsWith("NONE")))
+                if (!Match("RW09", "ENDIF")) ReportarError("Se esperaba cierre ENDIF (RW09).");
+                MatchDelimitador(); // Diagrama IN05_3: ENDIF DEL
+            }
+            // 5. Estructura PERHAPS (RW10) / Diagrama IN06
+            else if (t.StartsWith("RW10") || l.Equals("PERHAPS", StringComparison.OrdinalIgnoreCase))
+            {
+                Match("RW10", "PERHAPS");
+                if (pos < tokens.Count && (tokens[pos].Tipo.StartsWith("IDV") || tokens[pos].Tipo.StartsWith("NUC")))
+                {
+                    pos++;
+                }
+                else
+                {
+                    ParsearExpresion();
+                }
+                MatchDelimitador();
+
+                while (pos < tokens.Count && (tokens[pos].Tipo.StartsWith("RW11") || tokens[pos].Lexema.Equals("CASE", StringComparison.OrdinalIgnoreCase)))
+                {
+                    Match("RW11", "CASE");
+                    ParsearCondicionOExpresion();
+                    if (pos < tokens.Count && (tokens[pos].Tipo.StartsWith("SC:") || tokens[pos].Lexema == ":"))
+                    {
+                        pos++;
+                    }
+                    MatchDelimitador();
+                    ParsearInstrucciones();
+                }
+
+                if (pos < tokens.Count && (tokens[pos].Tipo.StartsWith("RW12") || tokens[pos].Lexema.Equals("NONE", StringComparison.OrdinalIgnoreCase)))
                 {
                     Match("RW12", "NONE");
-                    Match("DEL");
+                    if (pos < tokens.Count && (tokens[pos].Tipo.StartsWith("SC:") || tokens[pos].Lexema == ":"))
+                    {
+                        pos++;
+                    }
+                    else if (pos < tokens.Count && !EsFinDeBloque() && !EsDelimitador(tokens[pos]) && !tokens[pos].Tipo.StartsWith("IDV") && !tokens[pos].Tipo.StartsWith("RW"))
+                    {
+                        ParsearCondicionOExpresion();
+                    }
+                    if (pos < tokens.Count && (tokens[pos].Tipo.StartsWith("SC:") || tokens[pos].Lexema == ":"))
+                    {
+                        pos++;
+                    }
+                    MatchDelimitador();
                     ParsearInstrucciones();
                 }
 
                 if (!Match("RW13", "ENDCASE")) ReportarError("Se esperaba cierre ENDCASE (RW13).");
+                MatchDelimitador(); // Diagrama IN06_3: ENDCASE DEL
             }
-            // 6. Ciclo WHILE NORMAL
-            else if (t.StartsWith("RW20") || t.StartsWith("WHILE"))
+            // 6. Ciclo WHILE (RW20) / Diagrama IN10 (WHILE CONDIC ... ENDWHILE DEL)
+            else if (t.StartsWith("RW20") || l.Equals("WHILE", StringComparison.OrdinalIgnoreCase))
             {
                 Match("RW20", "WHILE");
                 ParsearCondicion();
 
-                if (!Match("RW21", "DO")) ReportarError("Se esperaba la palabra reservada DO.");
-                Match("DEL");
+                // Permitir DO opcionalmente si se incluye, pero sin forzarlo
+                if (Match("RW21", "DO"))
+                {
+                    MatchDelimitador();
+                }
+                else
+                {
+                    MatchDelimitador();
+                }
+
                 ParsearInstrucciones();
                 if (!Match("RW24", "ENDWHILE")) ReportarError("Se esperaba cierre ENDWHILE (RW24).");
+                MatchDelimitador(); // Diagrama IN10_1: ENDWHILE DEL
             }
-            // 7. Ciclo FOR (Revisa que los RW14, RW15, etc., sean los correctos de tu imagen)
-            else if (t.StartsWith("RW14") || t.StartsWith("FOR"))
+            // 7. Ciclo FOR (RW14) / Diagrama IN07
+            else if (t.StartsWith("RW14") || l.Equals("FOR", StringComparison.OrdinalIgnoreCase))
             {
                 int lineaFor = pos < tokens.Count ? tokens[pos].Linea : 1;
                 Match("RW14", "FOR");
-                TokenSintactico? tokId = pos < tokens.Count && tokens[pos].Tipo.StartsWith("IDV") ? tokens[pos] : null;
-                if (!Match("IDV")) ReportarError("Se esperaba un identificador para el FOR.");
-                TokenSintactico? tokAsig = pos < tokens.Count && (tokens[pos].Tipo.StartsWith("ALO=") || tokens[pos].Lexema == "=") ? tokens[pos] : null;
-                if (!Match("ALO=", "=")) ReportarError("Se esperaba operador de asignación '='.");
 
-                if (!Match("RW15", "FROM")) ReportarError("Se esperaba la palabra reservada FROM.");
+                TokenSintactico? tokId = null;
+                TokenSintactico? tokAsig = null;
+
+                // Forma 1: FOR FROM id = inicio ... (Diagrama IN07)
+                // Forma 2: FOR id [SET] = FROM inicio ... (Código actual / Archivo.txt)
+                if (Match("RW15", "FROM"))
+                {
+                    if (pos < tokens.Count && tokens[pos].Tipo.StartsWith("IDV"))
+                    {
+                        tokId = tokens[pos];
+                        pos++;
+                    }
+                    else ReportarError("Se esperaba un identificador después de FROM en el FOR.");
+
+                    if (pos < tokens.Count && (tokens[pos].Tipo.StartsWith("ALO=") || tokens[pos].Lexema == "="))
+                    {
+                        tokAsig = tokens[pos];
+                        pos++;
+                    }
+                    else ReportarError("Se esperaba operador de asignación '=' en el FOR.");
+                }
+                else
+                {
+                    if (pos < tokens.Count && tokens[pos].Tipo.StartsWith("IDV"))
+                    {
+                        tokId = tokens[pos];
+                        pos++;
+                    }
+                    else ReportarError("Se esperaba un identificador para el FOR.");
+
+                    Match("RW16", "SET"); // Opcional SET (RW16)
+
+                    if (pos < tokens.Count && (tokens[pos].Tipo.StartsWith("ALO=") || tokens[pos].Lexema == "="))
+                    {
+                        tokAsig = tokens[pos];
+                        pos++;
+                    }
+                    else ReportarError("Se esperaba operador de asignación '=' en el FOR.");
+
+                    if (!Match("RW15", "FROM")) ReportarError("Se esperaba la palabra reservada FROM.");
+                }
+
                 int inicioOp = pos;
                 ParsearExpresion();
                 int finOp = pos;
@@ -181,75 +377,126 @@ namespace Interfaz_Lexico
                     tokensAsigFor.AddRange(tokens.GetRange(inicioOp, finOp - inicioOp));
                     VerificarSemanticaOperacion(tokensAsigFor);
                 }
-                else
-                {
-                    VerificarSemanticaOperacion(tokens.GetRange(inicioOp, finOp - inicioOp));
-                }
 
                 if (!Match("RW17", "UNTIL")) ReportarError("Se esperaba la palabra reservada UNTIL.");
-                ParsearCondicion();
+                ParsearCondicionOExpresion();
 
                 if (!Match("RW18", "INTERVAL")) ReportarError("Se esperaba la palabra reservada INTERVAL.");
                 if (!Match("NUC") && !Match("INC") && !Match("RNC")) ReportarError("Se esperaba constante para el intervalo.");
-                Match("DEL");
+                MatchDelimitador();
 
                 ParsearInstrucciones();
 
-                if (!Match("RW19", "ENDFOR")) ReportarError("Se esperaba cierre ENDFOR.");
+                if (!Match("RW19", "ENDFOR")) ReportarError("Se esperaba cierre ENDFOR (RW19).");
+                MatchDelimitador(); // Diagrama IN07_1: ENDFOR DEL
             }
-            // 8. NUEVO: Ciclo DO WHILE (Ej. DO ... instrucciones ... WHILE condicion ENDDO)
-            else if (t.StartsWith("RW21") || t.StartsWith("DO"))
+            // 8. Ciclo DO WHILE (RW21) / Diagrama IN08
+            else if (t.StartsWith("RW21") || l.Equals("DO", StringComparison.OrdinalIgnoreCase))
             {
                 Match("RW21", "DO");
-                Match("DEL");
 
-                // Lee las instrucciones y se DETIENE automáticamente al ver un WHILE
-                ParsearInstrucciones("RW20", "WHILE");
+                // Diagrama IN08: DO WHILE CONDIC ... ENDDO DEL
+                if (pos < tokens.Count && (tokens[pos].Tipo.StartsWith("RW20") || tokens[pos].Lexema.Equals("WHILE", StringComparison.OrdinalIgnoreCase)))
+                {
+                    Match("RW20", "WHILE");
+                    ParsearCondicion();
+                    MatchDelimitador();
 
-                if (!Match("RW20", "WHILE")) ReportarError("Se esperaba la palabra reservada WHILE al final del DO.");
-                ParsearCondicion();
+                    ParsearInstrucciones();
 
-                if (!Match("RW23", "ENDDO")) ReportarError("Se esperaba cierre ENDDO (RW23).");
+                    if (!Match("RW23", "ENDDO")) ReportarError("Se esperaba cierre ENDDO (RW23).");
+                    MatchDelimitador(); // Diagrama IN08_1: ENDDO DEL
+                }
+                else
+                {
+                    // Variante de bloque: DO ... WHILE CONDIC ENDDO;
+                    MatchDelimitador();
+                    ParsearInstrucciones("RW20", "WHILE");
+
+                    if (!Match("RW20", "WHILE")) ReportarError("Se esperaba la palabra reservada WHILE al final del DO.");
+                    ParsearCondicion();
+
+                    if (!Match("RW23", "ENDDO")) ReportarError("Se esperaba cierre ENDDO (RW23).");
+                    MatchDelimitador();
+                }
             }
-            // 9. NUEVO: Ciclo EXECUTE (Ej. EXECUTE ... instrucciones ... UNTIL condicion ENDEXECUTE)
-            else if (t.StartsWith("RW22") || t.StartsWith("EXECUTE"))
+            // 9. Ciclo EXECUTE (RW22) / Diagrama IN09 (EXECUTE INST UNTIL CONDIC)
+            else if (t.StartsWith("RW22") || l.Equals("EXECUTE", StringComparison.OrdinalIgnoreCase))
             {
                 Match("RW22", "EXECUTE");
-                Match("DEL");
+                MatchDelimitador();
 
-                // Lee las instrucciones y se DETIENE automáticamente al ver un UNTIL
                 ParsearInstrucciones("RW17", "UNTIL");
 
                 if (!Match("RW17", "UNTIL")) ReportarError("Se esperaba la palabra reservada UNTIL al final del EXECUTE.");
                 ParsearCondicion();
 
-                // Cierre: Ajusta si en tu imagen dice ENDEXECUTE o ENDDO u otro
-                if (!Match(/*"RW23", "ENDEXECUTE",*/ "RW23", "ENDDO")) ReportarError("Se esperaba cierre ENDEXECUTE.");
+                // Consumo tolerante si incluyeron ENDDO
+                Match("RW23", "ENDDO");
+                MatchDelimitador();
             }
             else
             {
-                ReportarError($"Instrucción no válida o no esperada.");
-                pos++;
+                ReportarError($"Instrucción no válida o no esperada: '{tokens[pos].Lexema}' ({tokens[pos].Tipo}).");
+                SincronizarHastaDelimitador();
             }
-
-            Match("DEL", "SC;");
         }
 
         // Analiza y valida una condición lógica o relacional compuesta ParsearCondicion()
         private void ParsearCondicion()
         {
             int inicioCond = pos;
-            ParsearExpresion();
+            bool tieneNot = false;
+
+            // Soporte para operador lógico unario NOT (LO2)
+            if (pos < tokens.Count && (tokens[pos].Tipo.StartsWith("LO2") || tokens[pos].Lexema.Equals("NOT", StringComparison.OrdinalIgnoreCase)))
+            {
+                pos++;
+                tieneNot = true;
+            }
+
+            // Soporte para condición agrupada entre paréntesis (ej. (a > b))
+            bool tieneParentesis = false;
+            if (pos < tokens.Count && (tokens[pos].Tipo.StartsWith("SC(") || tokens[pos].Lexema == "("))
+            {
+                pos++;
+                tieneParentesis = true;
+                ParsearCondicion();
+                if (!Match("SC)") && (pos < tokens.Count && tokens[pos].Lexema != ")"))
+                {
+                    ReportarError("Se esperaba cierre de paréntesis ')' en la condición.");
+                }
+                else if (pos < tokens.Count && tokens[pos].Lexema == ")")
+                {
+                    pos++;
+                }
+            }
+            else
+            {
+                ParsearExpresion();
+            }
+
+            bool tieneRelacional = false;
             if (pos < tokens.Count && (tokens[pos].Tipo.StartsWith("RO") || tokens[pos].Tipo.StartsWith("REO")))
             {
+                tieneRelacional = true;
                 pos++;
                 ParsearExpresion();
             }
-            if (pos < tokens.Count && (tokens[pos].Tipo.StartsWith("LO") || tokens[pos].Tipo.StartsWith("OLOG")))
+
+            bool tieneLogico = false;
+            if (pos < tokens.Count && (tokens[pos].Tipo.StartsWith("LO") || tokens[pos].Tipo.StartsWith("LOP") || tokens[pos].Tipo.StartsWith("OLOG")))
             {
+                tieneLogico = true;
                 pos++;
                 ParsearCondicion();
             }
+
+            if (!tieneRelacional && !tieneLogico && !tieneNot && !tieneParentesis)
+            {
+                ReportarError("Se esperaba un operador relacional (>, <, ==, !=, >=, <=) o lógico en la condición.");
+            }
+
             int finCond = pos;
             if (finCond > inicioCond)
             {
@@ -257,11 +504,29 @@ namespace Interfaz_Lexico
             }
         }
 
+        // Analiza argumentos mixtos que pueden ser condiciones o expresiones (ej. ARG6 en CASE / NONE)
+        private void ParsearCondicionOExpresion()
+        {
+            int inicio = pos;
+            ParsearExpresion();
+            if (pos < tokens.Count && (tokens[pos].Tipo.StartsWith("RO") || tokens[pos].Tipo.StartsWith("REO")))
+            {
+                pos++;
+                ParsearExpresion();
+            }
+            int fin = pos;
+            if (fin > inicio)
+            {
+                VerificarSemanticaOperacion(tokens.GetRange(inicio, fin - inicio));
+            }
+        }
+
         // Analiza expresiones compuestas por términos separados por suma o resta ParsearExpresion()
         private void ParsearExpresion()
         {
             ParsearTermino();
-            while (pos < tokens.Count && (tokens[pos].Tipo.StartsWith("AO+") || tokens[pos].Tipo.StartsWith("AO-")))
+            while (pos < tokens.Count && (tokens[pos].Tipo.StartsWith("AO+") || tokens[pos].Tipo.StartsWith("AO-") ||
+                                         tokens[pos].Lexema == "+" || tokens[pos].Lexema == "-"))
             {
                 pos++;
                 ParsearTermino();
@@ -272,7 +537,9 @@ namespace Interfaz_Lexico
         private void ParsearTermino()
         {
             ParsearPotencia();
-            while (pos < tokens.Count && (tokens[pos].Tipo.StartsWith("AO*") || tokens[pos].Tipo.StartsWith("AO/") || tokens[pos].Tipo.StartsWith("AO%")))
+            while (pos < tokens.Count && (tokens[pos].Tipo.StartsWith("AO*") || tokens[pos].Tipo.StartsWith("AO/") ||
+                                         tokens[pos].Tipo.StartsWith("AO%") || tokens[pos].Tipo.StartsWith("SC%") ||
+                                         tokens[pos].Lexema == "*" || tokens[pos].Lexema == "/" || tokens[pos].Lexema == "%"))
             {
                 pos++;
                 ParsearPotencia();
@@ -283,10 +550,10 @@ namespace Interfaz_Lexico
         private void ParsearPotencia()
         {
             ParsearFactor();
-            while (pos < tokens.Count && tokens[pos].Tipo.StartsWith("AO^"))
+            while (pos < tokens.Count && (tokens[pos].Tipo.StartsWith("AO^") || tokens[pos].Tipo.StartsWith("SC^") || tokens[pos].Lexema == "^"))
             {
                 pos++;
-                ParsearPotencia();
+                ParsearFactor();
             }
         }
 
@@ -295,19 +562,37 @@ namespace Interfaz_Lexico
         {
             if (pos >= tokens.Count) return;
             // Permitir signo unario (+ o -) en números con signo como +5 o -9
-            if (tokens[pos].Tipo.StartsWith("AO+") || tokens[pos].Tipo.StartsWith("AO-"))
+            if (tokens[pos].Tipo.StartsWith("AO+") || tokens[pos].Tipo.StartsWith("AO-") || tokens[pos].Lexema == "+" || tokens[pos].Lexema == "-")
             {
                 pos++;
             }
-            if (Match("IDV") || Match("INC") || Match("RNC") || Match("NUC") || Match("STR")) { }
-            else if (Match("SC("))
+
+            if (pos >= tokens.Count)
             {
+                ReportarError("Se esperaba un operando después del signo.");
+                return;
+            }
+
+            if (Match("IDV") || Match("INC") || Match("RNC") || Match("NUC") || Match("STR"))
+            {
+                // Operando válido
+            }
+            else if (Match("SC(") || (pos < tokens.Count && tokens[pos].Lexema == "("))
+            {
+                if (pos < tokens.Count && tokens[pos].Lexema == "(") pos++;
                 ParsearExpresion();
-                if (!Match("SC)")) ReportarError("Se esperaba cierre de paréntesis 'SC)'.");
+                if (!Match("SC)") && (pos < tokens.Count && tokens[pos].Lexema != ")"))
+                {
+                    ReportarError("Se esperaba cierre de paréntesis 'SC)'.");
+                }
+                else if (pos < tokens.Count && tokens[pos].Lexema == ")")
+                {
+                    pos++;
+                }
             }
             else
             {
-                ReportarError("Se esperaba un valor, variable o expresión aritmética válida.");
+                ReportarError($"Se esperaba un valor, variable o expresión aritmética válida en vez de '{tokens[pos].Lexema}'.");
                 pos++;
             }
         }
@@ -327,14 +612,15 @@ namespace Interfaz_Lexico
             }
         }
 
-        // Comprueba si el tipo del token actual coincide con alguno de los esperados y avanza Match()
+        // Comprueba si el tipo o lexema del token actual coincide con alguno de los esperados y avanza Match()
         private bool Match(params string[] esperados)
         {
             if (pos >= tokens.Count) return false;
             string tipoActual = tokens[pos].Tipo;
+            string lexemaActual = tokens[pos].Lexema;
             foreach (string exp in esperados)
             {
-                if (tipoActual.StartsWith(exp))
+                if (tipoActual.StartsWith(exp) || lexemaActual.Equals(exp, StringComparison.OrdinalIgnoreCase))
                 {
                     pos++;
                     return true;

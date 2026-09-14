@@ -978,9 +978,13 @@ namespace Interfaz_Lexico
                 // 5. Palabras reservadas que no son operaciones
                 string primeraPalabra = lineaSinPuntoComa.Split(' ')[0].ToUpper();
                 if (primeraPalabra == "START" || primeraPalabra == "END" || primeraPalabra == "ELSE" ||
-                    primeraPalabra == "ENDIF" || primeraPalabra == "ENDWHILE" || primeraPalabra == "ENDFOR" ||
-                    primeraPalabra == "READ" || primeraPalabra == "DO" || primeraPalabra == "ENDDO" ||
-                    primeraPalabra == "EXECUTE" || primeraPalabra == "ENDEXECUTE" || primeraPalabra == "DEL")
+                    primeraPalabra == "FALSE" || primeraPalabra == "ENDIF" || primeraPalabra == "ENDWHILE" ||
+                    primeraPalabra == "ENDFOR" || primeraPalabra == "READ" || primeraPalabra == "DO" ||
+                    primeraPalabra == "ENDDO" || primeraPalabra == "EXECUTE" || primeraPalabra == "ENDEXECUTE" ||
+                    primeraPalabra == "DEL" || primeraPalabra == "PERHAPS" || primeraPalabra == "CASE" ||
+                    primeraPalabra == "NONE" || primeraPalabra == "ENDCASE" || primeraPalabra == "FOR" ||
+                    primeraPalabra == "FROM" || primeraPalabra == "SET" || primeraPalabra == "UNTIL" ||
+                    primeraPalabra == "INTERVAL")
                 {
                     continue;
                 }

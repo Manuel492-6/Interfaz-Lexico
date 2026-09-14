@@ -86,11 +86,22 @@ namespace Interfaz_Lexico
             }
         }
 
+        // Separa caracteres especiales y delimitadores de identificadores y constantes
+        // para que 'START;' o 'x = 10;' o 'ENDCASE;' se analicen correctamente sin requerir espacio previo
+        private string[] ObtenerPalabrasDeLinea(string linea)
+        {
+            if (string.IsNullOrEmpty(linea)) return Array.Empty<string>();
+
+            // Separar caracteres especiales como ; , ( ) [ ] { } : para que no queden pegados a identificadores
+            string normalizada = System.Text.RegularExpressions.Regex.Replace(linea, @"([;,()\[\]{}:])", " $1 ");
+            return normalizada.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        }
+
         // Valida léxicamente cada palabra de la línea contra la matriz de transiciones VerificarToken()
         private void VerificarToken(int i, List<string> Tokens)
         {
             string NuevoToken = "";
-            string[] palabras = richProgramaFuente.Lines[i].Split(" ", StringSplitOptions.RemoveEmptyEntries);
+            string[] palabras = ObtenerPalabrasDeLinea(richProgramaFuente.Lines[i]);
             bool Error = false;
 
             for (int j = 0; j < palabras.Length; j++)
@@ -329,14 +340,14 @@ namespace Interfaz_Lexico
                 string lineaTokens = richArchivoDeTokens.Lines[i];
                 string[] partes = lineaTokens.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
                 string[] palabras = i < richProgramaFuente.Lines.Length
-                    ? richProgramaFuente.Lines[i].Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
-                    : new string[0];
+                    ? ObtenerPalabrasDeLinea(richProgramaFuente.Lines[i])
+                    : Array.Empty<string>();
 
                 for (int p = 0; p < partes.Length; p++)
                 {
                     string parte = partes[p];
                     // Evitamos mandar los errores léxicos al sintáctico para no crear cascadas de fallos
-                    if (parte == "__ERROR__" || parte.StartsWith("Error")) continue;
+                    if (parte == "__ERROR__" || parte.StartsWith("Error") || parte.StartsWith("__E")) continue;
 
                     string lexema = p < palabras.Length ? palabras[p] : parte;
                     listaTokensSintacticos.Add(new TokenSintactico() { Tipo = parte, Lexema = lexema, Linea = i + 1 });
