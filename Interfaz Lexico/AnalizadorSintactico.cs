@@ -143,7 +143,6 @@ namespace Interfaz_Lexico
             // Palabras de cierre de bloque válidas en NovaNyx 1.4.2
             return t.StartsWith("RW02") || l.Equals("END", StringComparison.OrdinalIgnoreCase) ||
                    t.StartsWith("RW07") || l.Equals("ELSE", StringComparison.OrdinalIgnoreCase) ||
-                   t.StartsWith("RW08") || l.Equals("FALSE", StringComparison.OrdinalIgnoreCase) ||
                    t.StartsWith("RW09") || l.Equals("ENDIF", StringComparison.OrdinalIgnoreCase) ||
                    t.StartsWith("RW11") || l.Equals("CASE", StringComparison.OrdinalIgnoreCase) ||
                    t.StartsWith("RW12") || l.Equals("NONE", StringComparison.OrdinalIgnoreCase) ||
@@ -186,16 +185,16 @@ namespace Interfaz_Lexico
             else if (t.StartsWith("RW03") || l.Equals("READ", StringComparison.OrdinalIgnoreCase))
             {
                 Match("RW03", "READ");
-                if (!Match("IDV") && !Match("NUC") && !Match("INC") && !Match("RNC") && !Match("STR"))
+                if (!Match("IDV") && !Match("NUC") && !Match("INC") && !Match("RNC") && !Match("NCR") && !Match("STR") && !Match("RW26", "TRUE") && !Match("RW08", "FALSE"))
                 {
-                    ReportarError("Se esperaba un argumento válido para leer (IDV, NUC).");
+                    ReportarError("Se esperaba un argumento válido para leer (IDV, NUC, NCR, constantes).");
                 }
 
                 // Múltiples argumentos separados por coma según diagrama IN04: (, ARG4)*
                 while (pos < tokens.Count && (tokens[pos].Tipo.StartsWith("SC,") || tokens[pos].Lexema == ","))
                 {
                     pos++;
-                    if (!Match("IDV") && !Match("NUC") && !Match("INC") && !Match("RNC") && !Match("STR"))
+                    if (!Match("IDV") && !Match("NUC") && !Match("INC") && !Match("RNC") && !Match("NCR") && !Match("STR") && !Match("RW26", "TRUE") && !Match("RW08", "FALSE"))
                     {
                         ReportarError("Se esperaba un argumento válido después de la coma en READ.");
                     }
@@ -238,7 +237,7 @@ namespace Interfaz_Lexico
 
                 ParsearInstrucciones();
 
-                if (Match("RW07", "ELSE") || Match("RW08", "FALSE"))
+                if (Match("RW07", "ELSE"))
                 {
                     MatchDelimitador(); // Diagrama IN05_2: ELSE DEL
                     ParsearInstrucciones();
@@ -382,7 +381,7 @@ namespace Interfaz_Lexico
                 ParsearCondicionOExpresion();
 
                 if (!Match("RW18", "INTERVAL")) ReportarError("Se esperaba la palabra reservada INTERVAL.");
-                if (!Match("NUC") && !Match("INC") && !Match("RNC")) ReportarError("Se esperaba constante para el intervalo.");
+                if (!Match("NUC") && !Match("INC") && !Match("RNC") && !Match("NCR")) ReportarError("Se esperaba constante para el intervalo.");
                 MatchDelimitador();
 
                 ParsearInstrucciones();
@@ -492,7 +491,13 @@ namespace Interfaz_Lexico
                 ParsearCondicion();
             }
 
-            if (!tieneRelacional && !tieneLogico && !tieneNot && !tieneParentesis)
+            bool esBooleanoDirecto = (inicioCond < pos && tokens.GetRange(inicioCond, pos - inicioCond).Any(tok =>
+                tok.Tipo.StartsWith("RW26") || tok.Tipo.StartsWith("RW08") ||
+                tok.Lexema.Equals("TRUE", StringComparison.OrdinalIgnoreCase) ||
+                tok.Lexema.Equals("FALSE", StringComparison.OrdinalIgnoreCase) ||
+                semantico.ObtenerTipo(tok.Lexema) == "bool"));
+
+            if (!tieneRelacional && !tieneLogico && !tieneNot && !tieneParentesis && !esBooleanoDirecto)
             {
                 ReportarError("Se esperaba un operador relacional (>, <, ==, !=, >=, <=) o lógico en la condición.");
             }
@@ -561,19 +566,26 @@ namespace Interfaz_Lexico
         private void ParsearFactor()
         {
             if (pos >= tokens.Count) return;
+            // Soporte para operador lógico unario NOT (LO2, NOT, !)
+            if (tokens[pos].Tipo.StartsWith("LO2") || tokens[pos].Lexema.Equals("NOT", StringComparison.OrdinalIgnoreCase) || tokens[pos].Lexema == "!")
+            {
+                pos++;
+            }
+
             // Permitir signo unario (+ o -) en números con signo como +5 o -9
-            if (tokens[pos].Tipo.StartsWith("AO+") || tokens[pos].Tipo.StartsWith("AO-") || tokens[pos].Lexema == "+" || tokens[pos].Lexema == "-")
+            if (pos < tokens.Count && (tokens[pos].Tipo.StartsWith("AO+") || tokens[pos].Tipo.StartsWith("AO-") || tokens[pos].Lexema == "+" || tokens[pos].Lexema == "-"))
             {
                 pos++;
             }
 
             if (pos >= tokens.Count)
             {
-                ReportarError("Se esperaba un operando después del signo.");
+                ReportarError("Se esperaba un operando después del signo u operador.");
                 return;
             }
 
-            if (Match("IDV") || Match("INC") || Match("RNC") || Match("NUC") || Match("STR"))
+            if (Match("IDV") || Match("INC") || Match("RNC") || Match("NCR") || Match("NUC") || Match("STR") ||
+                Match("RW26", "TRUE") || Match("RW08", "FALSE") || Match("BOOL"))
             {
                 // Operando válido
             }

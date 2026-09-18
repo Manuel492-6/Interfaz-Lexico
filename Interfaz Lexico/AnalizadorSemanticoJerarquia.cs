@@ -166,6 +166,8 @@ namespace Interfaz_Lexico
                 else if (t.Tipo.StartsWith("AO^")) lex = "^";
                 else if (t.Tipo.StartsWith("SC(")) lex = "(";
                 else if (t.Tipo.StartsWith("SC)")) lex = ")";
+                else if (t.Tipo.StartsWith("RW26") || t.Lexema.Equals("TRUE", StringComparison.OrdinalIgnoreCase)) lex = "TRUE";
+                else if (t.Tipo.StartsWith("RW08") || t.Lexema.Equals("FALSE", StringComparison.OrdinalIgnoreCase)) lex = "FALSE";
 
                 sb.Append(lex).Append(" ");
             }
@@ -196,11 +198,13 @@ namespace Interfaz_Lexico
                 {
                     list.Add(new TokenSemantico { Lexema = "(", Tipo = "PAR_ABRE", Linea = linea, Posicion = i });
                     i++;
+                    continue;
                 }
                 else if (c == ')')
                 {
                     list.Add(new TokenSemantico { Lexema = ")", Tipo = "PAR_CIERRA", Linea = linea, Posicion = i });
                     i++;
+                    continue;
                 }
                 // Asignación o Relacional (==, <=, >=, !=, <, >)
                 else if (c == '=')
@@ -215,6 +219,7 @@ namespace Interfaz_Lexico
                         list.Add(new TokenSemantico { Lexema = "=", Tipo = "ASIG", Linea = linea, Posicion = i });
                         i++;
                     }
+                    continue;
                 }
                 else if (c == '<' || c == '>')
                 {
@@ -228,6 +233,7 @@ namespace Interfaz_Lexico
                         list.Add(new TokenSemantico { Lexema = c.ToString(), Tipo = "OP_REL", Linea = linea, Posicion = i });
                         i++;
                     }
+                    continue;
                 }
                 else if (c == '!')
                 {
@@ -241,17 +247,20 @@ namespace Interfaz_Lexico
                         list.Add(new TokenSemantico { Lexema = "!", Tipo = "OP_LOG", Linea = linea, Posicion = i });
                         i++;
                     }
+                    continue;
                 }
                 // Operadores Lógicos (&&, ||)
                 else if (c == '&' && i + 1 < entrada.Length && entrada[i + 1] == '&')
                 {
                     list.Add(new TokenSemantico { Lexema = "&&", Tipo = "OP_LOG", Linea = linea, Posicion = i });
                     i += 2;
+                    continue;
                 }
                 else if (c == '|' && i + 1 < entrada.Length && entrada[i + 1] == '|')
                 {
                     list.Add(new TokenSemantico { Lexema = "||", Tipo = "OP_LOG", Linea = linea, Posicion = i });
                     i += 2;
+                    continue;
                 }
                 // Números con signo obligatorio o explícito (+5, -9, +10.5, etc.)
                 // Permite opcionalmente espacios entre signo y número: ej. "+5", "+ 5", "-9", "- 9"
@@ -328,6 +337,11 @@ namespace Interfaz_Lexico
                         palabra.Equals("NOT", StringComparison.OrdinalIgnoreCase))
                     {
                         list.Add(new TokenSemantico { Lexema = palabra.ToUpper(), Tipo = "OP_LOG", Linea = linea, Posicion = inicio });
+                    }
+                    else if (palabra.Equals("TRUE", StringComparison.OrdinalIgnoreCase) ||
+                             palabra.Equals("FALSE", StringComparison.OrdinalIgnoreCase))
+                    {
+                        list.Add(new TokenSemantico { Lexema = palabra.ToUpper(), Tipo = "BOOL", Linea = linea, Posicion = inicio });
                     }
                     else
                     {
@@ -512,6 +526,26 @@ namespace Interfaz_Lexico
         // Parsea potenciación y operadores unarios en el nivel 2 de jerarquía ParsearPotencia()
         private NodoJerarquia ParsearPotencia()
         {
+            // Operadores lógicos unarios (! o NOT)
+            if (pos < tokens.Count && (tokens[pos].Lexema == "!" || tokens[pos].Lexema.Equals("NOT", StringComparison.OrdinalIgnoreCase)))
+            {
+                TokenSemantico opTok = tokens[pos];
+                pos++;
+                NodoJerarquia operando = ParsearPotencia();
+                string desc = $"Nivel 2: Negación Lógica ({opTok.Lexema})";
+                string? valCalc = null;
+                string valOperando = operando.ValorCalculado?.Trim() ?? "";
+                if (valOperando.Equals("TRUE", StringComparison.OrdinalIgnoreCase)) valCalc = "FALSE";
+                else if (valOperando.Equals("FALSE", StringComparison.OrdinalIgnoreCase)) valCalc = "TRUE";
+                else if (bool.TryParse(valOperando, out bool bVal)) valCalc = bVal ? "FALSE" : "TRUE";
+
+                return new NodoJerarquia(opTok.Lexema + " (Unario)", "Operador", 2, desc, "bool")
+                {
+                    Izquierdo = operando,
+                    ValorCalculado = valCalc
+                };
+            }
+
             // Operadores unarios (+ o -): ej. -(a + b), +(a + b), -x, +x, -9, +5
             if (pos < tokens.Count && (tokens[pos].Lexema == "-" || tokens[pos].Lexema == "+") &&
                 (pos == 0 || tokens[pos - 1].Tipo == "OP_ARIT" || tokens[pos - 1].Tipo == "ASIG" || tokens[pos - 1].Tipo == "PAR_ABRE" || tokens[pos - 1].Tipo == "OP_REL" || tokens[pos - 1].Tipo == "OP_LOG"))
@@ -598,7 +632,20 @@ namespace Interfaz_Lexico
                 return nodoAgrupacion;
             }
 
-            // 2. CONSTANTES NUMÉRICAS
+            // 2. CONSTANTES BOOLEANAS (TRUE, FALSE)
+            if (tok.Tipo == "BOOL" ||
+                tok.Lexema.Equals("TRUE", StringComparison.OrdinalIgnoreCase) ||
+                tok.Lexema.Equals("FALSE", StringComparison.OrdinalIgnoreCase))
+            {
+                pos++;
+                string valBool = tok.Lexema.ToUpper();
+                return new NodoJerarquia(valBool, "Constante", 0, "Operando Constante Booleana", "bool")
+                {
+                    ValorCalculado = valBool
+                };
+            }
+
+            // 3. CONSTANTES NUMÉRICAS
             if (tok.Tipo == "NUM")
             {
                 pos++;
@@ -609,7 +656,7 @@ namespace Interfaz_Lexico
                 };
             }
 
-            // 3. CADENAS
+            // 4. CADENAS
             if (tok.Tipo == "STR")
             {
                 pos++;
@@ -619,7 +666,7 @@ namespace Interfaz_Lexico
                 };
             }
 
-            // 4. IDENTIFICADORES (VARIABLES)
+            // 5. IDENTIFICADORES (VARIABLES)
             if (tok.Tipo == "ID")
             {
                 pos++;
@@ -698,6 +745,38 @@ namespace Interfaz_Lexico
 
             if (nodo.TipoNodo == "Operador")
             {
+                // Operadores unarios (+, -, !, NOT)
+                if (nodo.Derecho == null)
+                {
+                    if (nodo.Lexema.Contains("!") || nodo.Lexema.Contains("NOT"))
+                    {
+                        nodo.TipoDato = "bool";
+                        string valIzq = nodo.Izquierdo?.ValorCalculado?.Trim() ?? "";
+                        if (valIzq.Equals("TRUE", StringComparison.OrdinalIgnoreCase) || valIzq.Equals("true", StringComparison.OrdinalIgnoreCase))
+                        {
+                            nodo.ValorCalculado = "FALSE";
+                        }
+                        else if (valIzq.Equals("FALSE", StringComparison.OrdinalIgnoreCase) || valIzq.Equals("false", StringComparison.OrdinalIgnoreCase))
+                        {
+                            nodo.ValorCalculado = "TRUE";
+                        }
+                        else if (bool.TryParse(valIzq, out bool bVal))
+                        {
+                            nodo.ValorCalculado = bVal ? "FALSE" : "TRUE";
+                        }
+                    }
+                    else
+                    {
+                        nodo.TipoDato = nodo.Izquierdo?.TipoDato ?? "int";
+                        if (double.TryParse(nodo.Izquierdo?.ValorCalculado, NumberStyles.Any, CultureInfo.InvariantCulture, out double v))
+                        {
+                            double resVal = nodo.Lexema.StartsWith("-") ? -v : v;
+                            nodo.ValorCalculado = FormatearNumeroConSigno(resVal, nodo.TipoDato == "int");
+                        }
+                    }
+                    return;
+                }
+
                 string tipoIzq = nodo.Izquierdo?.TipoDato ?? "desconocido";
                 string tipoDer = nodo.Derecho?.TipoDato ?? "desconocido";
 
@@ -715,9 +794,22 @@ namespace Interfaz_Lexico
                         nodo.TipoDato = "string";
                     }
                 }
+                else if (tipoIzq == "bool" || tipoDer == "bool")
+                {
+                    if (nodo.NivelJerarquia == 5 || nodo.NivelJerarquia == 6)
+                    {
+                        nodo.TipoDato = "bool";
+                    }
+                    else
+                    {
+                        nodo.TieneError = true;
+                        nodo.MensajeError = $"Incompatibilidad de tipos: no se puede aplicar el operador aritmético '{nodo.Lexema}' a valores booleanos.";
+                        ReportarError(nodo.MensajeError);
+                    }
+                }
                 else
                 {
-                    // Ambos son numéricos o booleanos
+                    // Ambos son numéricos
                     if (nodo.NivelJerarquia == 5 || nodo.NivelJerarquia == 6)
                     {
                         nodo.TipoDato = "bool";
@@ -737,8 +829,36 @@ namespace Interfaz_Lexico
                 }
 
                 // Cálculo constante si ambos lados tienen valor
-                if (double.TryParse(nodo.Izquierdo?.ValorCalculado, NumberStyles.Any, CultureInfo.InvariantCulture, out double valIzq) &&
-                    double.TryParse(nodo.Derecho?.ValorCalculado, NumberStyles.Any, CultureInfo.InvariantCulture, out double valDer))
+                string valIzqStr = nodo.Izquierdo?.ValorCalculado ?? "";
+                string valDerStr = nodo.Derecho?.ValorCalculado ?? "";
+
+                bool esBoolIzq = bool.TryParse(valIzqStr, out bool bIzq);
+                bool esBoolDer = bool.TryParse(valDerStr, out bool bDer);
+
+                if (esBoolIzq && esBoolDer)
+                {
+                    try
+                    {
+                        if (nodo.NivelJerarquia == 5)
+                        {
+                            bool resBool = nodo.Lexema switch
+                            {
+                                "==" => bIzq == bDer,
+                                "!=" => bIzq != bDer,
+                                _ => false
+                            };
+                            nodo.ValorCalculado = resBool ? "TRUE" : "FALSE";
+                        }
+                        else if (nodo.NivelJerarquia == 6)
+                        {
+                            bool resBool = (nodo.Lexema == "&&" || nodo.Lexema == "AND") ? (bIzq && bDer) : (bIzq || bDer);
+                            nodo.ValorCalculado = resBool ? "TRUE" : "FALSE";
+                        }
+                    }
+                    catch { }
+                }
+                else if (double.TryParse(valIzqStr, NumberStyles.Any, CultureInfo.InvariantCulture, out double valIzq) &&
+                         double.TryParse(valDerStr, NumberStyles.Any, CultureInfo.InvariantCulture, out double valDer))
                 {
                     try
                     {
@@ -754,14 +874,14 @@ namespace Interfaz_Lexico
                                 "!=" => Math.Abs(valIzq - valDer) >= 0.000001,
                                 _ => false
                             };
-                            nodo.ValorCalculado = resBool ? "true" : "false";
+                            nodo.ValorCalculado = resBool ? "TRUE" : "FALSE";
                         }
                         else if (nodo.NivelJerarquia == 6)
                         {
-                            bool bIzq = valIzq != 0;
-                            bool bDer = valDer != 0;
-                            bool resBool = (nodo.Lexema == "&&" || nodo.Lexema == "AND") ? (bIzq && bDer) : (bIzq || bDer);
-                            nodo.ValorCalculado = resBool ? "true" : "false";
+                            bool bIzqNum = valIzq != 0;
+                            bool bDerNum = valDer != 0;
+                            bool resBool = (nodo.Lexema == "&&" || nodo.Lexema == "AND") ? (bIzqNum && bDerNum) : (bIzqNum || bDerNum);
+                            nodo.ValorCalculado = resBool ? "TRUE" : "FALSE";
                         }
                         else
                         {
@@ -978,7 +1098,7 @@ namespace Interfaz_Lexico
                 // 5. Palabras reservadas que no son operaciones
                 string primeraPalabra = lineaSinPuntoComa.Split(' ')[0].ToUpper();
                 if (primeraPalabra == "START" || primeraPalabra == "END" || primeraPalabra == "ELSE" ||
-                    primeraPalabra == "FALSE" || primeraPalabra == "ENDIF" || primeraPalabra == "ENDWHILE" ||
+                    primeraPalabra == "ENDIF" || primeraPalabra == "ENDWHILE" ||
                     primeraPalabra == "ENDFOR" || primeraPalabra == "READ" || primeraPalabra == "DO" ||
                     primeraPalabra == "ENDDO" || primeraPalabra == "EXECUTE" || primeraPalabra == "ENDEXECUTE" ||
                     primeraPalabra == "DEL" || primeraPalabra == "PERHAPS" || primeraPalabra == "CASE" ||
