@@ -655,7 +655,17 @@ namespace Interfaz_Lexico
         // Registra un error semántico con su línea en la tabla visual de errores ReportarErrorSemantico()
         private void ReportarErrorSemantico(string mensaje, int linea)
         {
-            dgtErrores.Rows.Add(linea, mensaje);
+            string mensajeLimpio = mensaje;
+            if (mensajeLimpio.StartsWith("Línea "))
+            {
+                int idxDosPuntos = mensajeLimpio.IndexOf(':');
+                if (idxDosPuntos != -1 && idxDosPuntos + 1 < mensajeLimpio.Length)
+                {
+                    mensajeLimpio = mensajeLimpio.Substring(idxDosPuntos + 1).Trim();
+                }
+            }
+
+            dgtErrores.Rows.Add(linea, mensajeLimpio);
 
             int lastRow = dgtErrores.Rows.Count - 1;
             if (lastRow >= 0)

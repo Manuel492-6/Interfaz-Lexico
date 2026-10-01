@@ -51,6 +51,78 @@ namespace Interfaz_Lexico
             {"__ERROR__", "Error no valido por caracteres no validos"}
          };
 
+        // Diccionario oficial de las 26 palabras reservadas del lenguaje NovaNyx
+        private static readonly Dictionary<string, string> MapaPalabrasReservadas = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "START", "RW01" },
+            { "END", "RW02" },
+            { "READ", "RW03" },
+            { "PRINT", "RW04" },
+            { "IF", "RW05" },
+            { "THEN", "RW06" },
+            { "ELSE", "RW07" },
+            { "FALSE", "RW08" },
+            { "ENDIF", "RW09" },
+            { "PERHAPS", "RW10" },
+            { "CASE", "RW11" },
+            { "NONE", "RW12" },
+            { "ENDCASE", "RW13" },
+            { "FOR", "RW14" },
+            { "FROM", "RW15" },
+            { "SET", "RW16" },
+            { "UNTIL", "RW17" },
+            { "INTERVAL", "RW18" },
+            { "ENDFOR", "RW19" },
+            { "WHILE", "RW20" },
+            { "DO", "RW21" },
+            { "EXECUTE", "RW22" },
+            { "ENDDO", "RW23" },
+            { "ENDWHILE", "RW24" },
+            { "ENDEXECUTE", "RW25" },
+            { "TRUE", "RW26" }
+        };
+
+        // Registra o recupera un identificador (variable) y concatena su token 'IDVn' en la lista RegistrarVariableEnTokens()
+        private void RegistrarVariableEnTokens(string nombreVariable, ref string nuevoToken)
+        {
+            Identificador nuevoIdentificador = new Identificador
+            {
+                Nombre = nombreVariable,
+                Valor = "Null",
+                TipoDeDato = "Null",
+                DireccionMemoria = "0x0000",
+                Bytes = 4,
+                Ambito = "Global"
+            };
+
+            Identificador? existente = null;
+            if (!ListaDeIdentificadoresOrdenada.Vacia)
+            {
+                foreach (var item in ListaDeIdentificadoresOrdenada)
+                {
+                    if (item.Nombre == nuevoIdentificador.Nombre)
+                    {
+                        existente = item;
+                        break;
+                    }
+                }
+            }
+
+            int idAUsar;
+            if (existente == null)
+            {
+                idAUsar = ListaDeIdentificadoresOrdenada.Contar + 1;
+                nuevoIdentificador.NumeroDeIdentificador = idAUsar;
+                ListaDeIdentificadoresOrdenada.Insertar(nuevoIdentificador);
+            }
+            else
+            {
+                idAUsar = existente.NumeroDeIdentificador;
+            }
+
+            nuevoToken += "IDV" + idAUsar.ToString() + " ";
+        }
+
 
         // Inicializa los componentes de la interfaz de usuario Form1()
         public Form1()
@@ -106,12 +178,30 @@ namespace Interfaz_Lexico
 
             for (int j = 0; j < palabras.Length; j++)
             {
+                string palabraActual = palabras[j];
+
+                // 1. Si coincide EXACTAMENTE con una palabra reservada oficial:
+                if (MapaPalabrasReservadas.TryGetValue(palabraActual, out string? rwCodigo))
+                {
+                    NuevoToken += rwCodigo + " ";
+                    continue;
+                }
+
+                // 2. Si tiene formato de identificador/variable (letras, dígitos, _):
+                // Como ya se descartó que sea una palabra reservada exacta, es una variable legítima (ej. STAR, EN, E, FO, WHIL)
+                if (System.Text.RegularExpressions.Regex.IsMatch(palabraActual, @"^[a-zA-Z_][a-zA-Z0-9_]*$"))
+                {
+                    RegistrarVariableEnTokens(palabraActual, ref NuevoToken);
+                    continue;
+                }
+
+                // 3. Para los demás elementos (operadores, números con signo, delimitadores): procesar con matriz SQL
                 int EstadoActual = 1;
                 int SiguienteEstado = 1;
                 int columna = 0;
                 int contadorChar = 0;
 
-                foreach (char simbolo in palabras[j])
+                foreach (char simbolo in palabraActual)
                 {
                     contadorChar++;
                     columna = alfabetoTemporal.IndexOf(simbolo.ToString());
@@ -121,7 +211,7 @@ namespace Interfaz_Lexico
                         NuevoToken += "__ERROR__ " + " ";
                         AgregarErrores("__ERROR__", i);
                         Error = true;
-                        continue;
+                        break;
                     }
 
                     SiguienteEstado = matrizCompleta[EstadoActual, columna + 1] == "Error" ? -1 : int.Parse(matrizCompleta[EstadoActual, columna + 1]);
@@ -132,7 +222,7 @@ namespace Interfaz_Lexico
                         NuevoToken += Errores.ContainsKey(eKey) ? Errores[eKey] : "__ERROR__";
                         AgregarErrores(Errores.ContainsKey(eKey) ? Errores[eKey] : "__ERROR__", i);
                         Error = true;
-                        continue;
+                        break;
                     }
                     EstadoActual = SiguienteEstado;
                 }
@@ -147,55 +237,17 @@ namespace Interfaz_Lexico
                         string eKey = matrizCompleta[EstadoActual, matrizCompleta.GetLength(1) - 1];
                         NuevoToken += Errores.ContainsKey(eKey) ? Errores[eKey] : "__ERROR__";
                         AgregarErrores(Errores.ContainsKey(eKey) ? Errores[eKey] : "__ERROR__", i);
-                        continue;
                     }
                     else
                     {
-                        if (matrizCompleta[SiguienteEstado, matrizCompleta.GetLength(1) - 1] == "IDV")
+                        string tipoAcepta = matrizCompleta[SiguienteEstado, matrizCompleta.GetLength(1) - 1];
+                        if (tipoAcepta == "IDV")
                         {
-                            if (contadorChar == palabras[j].Length)
-                            {
-                                Identificador nuevoIdentificador = new Identificador();
-                                nuevoIdentificador.Nombre = palabras[j];
-                                nuevoIdentificador.Valor = "Null";
-                                nuevoIdentificador.TipoDeDato = "Null";
-
-                                Identificador existente = null;
-
-                                if (!ListaDeIdentificadoresOrdenada.Vacia)
-                                {
-                                    foreach (var item in ListaDeIdentificadoresOrdenada)
-                                    {
-                                        if (item.Nombre == nuevoIdentificador.Nombre)
-                                        {
-                                            existente = item;
-                                            break;
-                                        }
-                                    }
-                                }
-
-                                int idAUsar;
-                                if (existente == null)
-                                {
-                                    idAUsar = ListaDeIdentificadoresOrdenada.Contar + 1;
-                                    nuevoIdentificador.NumeroDeIdentificador = idAUsar;
-                                    ListaDeIdentificadoresOrdenada.Insertar(nuevoIdentificador);
-                                }
-                                else
-                                {
-                                    idAUsar = existente.NumeroDeIdentificador;
-                                }
-
-                                NuevoToken += matrizCompleta[SiguienteEstado, matrizCompleta.GetLength(1) - 1] + idAUsar.ToString() + " ";
-                            }
-                            else
-                            {
-                                NuevoToken += matrizCompleta[SiguienteEstado, matrizCompleta.GetLength(1) - 1] + " ";
-                            }
+                            RegistrarVariableEnTokens(palabraActual, ref NuevoToken);
                         }
                         else
                         {
-                            NuevoToken += matrizCompleta[SiguienteEstado, matrizCompleta.GetLength(1) - 1] + " ";
+                            NuevoToken += tipoAcepta + " ";
                         }
                     }
                 }
@@ -205,7 +257,15 @@ namespace Interfaz_Lexico
             dgtTablaDeSimbolos.Rows.Clear();
             foreach (var identificador in ListaDeIdentificadoresOrdenada)
             {
-                dgtTablaDeSimbolos.Rows.Add(identificador.NumeroDeIdentificador, identificador.Nombre, identificador.TipoDeDato, identificador.Valor);
+                dgtTablaDeSimbolos.Rows.Add(
+                    identificador.NumeroDeIdentificador,
+                    identificador.Nombre,
+                    identificador.TipoDeDato,
+                    identificador.Valor,
+                    identificador.DireccionMemoria,
+                    $"{identificador.Bytes} Bytes",
+                    identificador.Ambito
+                );
             }
 
             Tokens.Add(NuevoToken.TrimEnd());
@@ -354,15 +414,18 @@ namespace Interfaz_Lexico
                 }
             }
 
-            // Registrar identificadores existentes en el analizador semántico
+            // Registrar identificadores existentes en el analizador semántico solo si ya tienen tipo/valor definido
             analizadorSemantico = new AnalizadorSemanticoJerarquia();
             if (!ListaDeIdentificadoresOrdenada.Vacia)
             {
                 foreach (var id in ListaDeIdentificadoresOrdenada)
                 {
-                    string tipoInicial = (!string.IsNullOrEmpty(id.TipoDeDato) && id.TipoDeDato != "Null") ? id.TipoDeDato : "int";
+                    string? tipoInicial = (!string.IsNullOrEmpty(id.TipoDeDato) && id.TipoDeDato != "Null" && id.TipoDeDato != "desconocido") ? id.TipoDeDato : null;
                     string? valInicial = (!string.IsNullOrEmpty(id.Valor) && id.Valor != "Null") ? id.Valor : null;
-                    analizadorSemantico.RegistrarVariable(id.Nombre, tipoInicial, valInicial);
+                    if (tipoInicial != null)
+                    {
+                        analizadorSemantico.RegistrarVariable(id.Nombre, tipoInicial, valInicial);
+                    }
                 }
             }
 
@@ -537,16 +600,19 @@ namespace Interfaz_Lexico
         // Compila y visualiza el árbol jerárquico de operadores y la semántica CompilarArbolJerarquia()
         public void CompilarArbolJerarquia(AnalizadorSintactico? sintactico = null)
         {
-            // Registrar variables de la tabla de símbolos si existen y aún no están registradas
+            // Registrar variables de la tabla de símbolos si existen y ya tienen tipo asignado
             if (!ListaDeIdentificadoresOrdenada.Vacia)
             {
                 foreach (var id in ListaDeIdentificadoresOrdenada)
                 {
                     if (!analizadorSemantico.TieneVariable(id.Nombre))
                     {
-                        string tipoInicial = (!string.IsNullOrEmpty(id.TipoDeDato) && id.TipoDeDato != "Null") ? id.TipoDeDato : "int";
+                        string? tipoInicial = (!string.IsNullOrEmpty(id.TipoDeDato) && id.TipoDeDato != "Null" && id.TipoDeDato != "desconocido") ? id.TipoDeDato : null;
                         string? valInicial = (!string.IsNullOrEmpty(id.Valor) && id.Valor != "Null") ? id.Valor : null;
-                        analizadorSemantico.RegistrarVariable(id.Nombre, tipoInicial, valInicial);
+                        if (tipoInicial != null)
+                        {
+                            analizadorSemantico.RegistrarVariable(id.Nombre, tipoInicial, valInicial);
+                        }
                     }
                 }
             }
@@ -596,9 +662,12 @@ namespace Interfaz_Lexico
             }
         }
 
-        // Sincroniza la tabla de símbolos con los tipos y valores del analizador semántico ActualizarTablaDeSimbolos()
+        // Sincroniza la tabla de símbolos con los tipos, valores y asignación de direcciones y memoria (1.6) ActualizarTablaDeSimbolos()
         private void ActualizarTablaDeSimbolos()
         {
+            int direccionBase = 0x1000;
+            int offsetActual = direccionBase;
+
             if (!ListaDeIdentificadoresOrdenada.Vacia)
             {
                 foreach (var identificador in ListaDeIdentificadoresOrdenada)
@@ -610,7 +679,7 @@ namespace Interfaz_Lexico
                     }
                     else if (string.IsNullOrEmpty(identificador.TipoDeDato) || identificador.TipoDeDato == "Null")
                     {
-                        identificador.TipoDeDato = "int";
+                        identificador.TipoDeDato = "desconocido";
                     }
 
                     string? valorSemantico = analizadorSemantico.ObtenerValor(identificador.Nombre);
@@ -618,6 +687,25 @@ namespace Interfaz_Lexico
                     {
                         identificador.Valor = valorSemantico;
                     }
+
+                    // Asignación de tamaño / peso en memoria simulada (1.6 Reserva de memoria)
+                    int pesoBytes = identificador.TipoDeDato.ToLower() switch
+                    {
+                        "int" => 4,
+                        "float" => 8,
+                        "bool" => 1,
+                        "string" => (!string.IsNullOrEmpty(identificador.Valor) && identificador.Valor != "Null")
+                                        ? Math.Max(4, identificador.Valor.Length)
+                                        : 8,
+                        _ => 4
+                    };
+
+                    identificador.Bytes = pesoBytes;
+                    identificador.DireccionMemoria = $"0x{offsetActual:X4}";
+                    identificador.Ambito = "Global";
+
+                    // Desplazamiento de memoria para la siguiente variable
+                    offsetActual += pesoBytes;
                 }
             }
 
@@ -628,7 +716,10 @@ namespace Interfaz_Lexico
                     identificador.NumeroDeIdentificador,
                     identificador.Nombre,
                     identificador.TipoDeDato,
-                    identificador.Valor
+                    identificador.Valor,
+                    identificador.DireccionMemoria,
+                    $"{identificador.Bytes} Bytes",
+                    identificador.Ambito
                 );
             }
         }
