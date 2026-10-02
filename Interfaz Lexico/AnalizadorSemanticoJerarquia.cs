@@ -33,6 +33,7 @@ namespace Interfaz_Lexico
         private List<string> errores = new List<string>();
         private List<string> pasos = new List<string>();
         private int pasoContador = 1;
+        private int lineaActual = 1;
         private Dictionary<string, string> tablaTipos = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         private Dictionary<string, string> tablaValores = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
@@ -94,6 +95,7 @@ namespace Interfaz_Lexico
         // Analiza semánticamente una expresión según la jerarquía de operadores y genera su árbol y pasos AnalizarExpresion()
         public ResultadoSemanticoOperacion AnalizarExpresion(string expresionTexto, int linea = 1)
         {
+            lineaActual = linea;
             errores.Clear();
             pasos.Clear();
             pasoContador = 1;
@@ -501,7 +503,7 @@ namespace Interfaz_Lexico
                     {
                         derecho.TieneError = true;
                         derecho.MensajeError = "División entre cero no permitida";
-                        ReportarError("División entre cero detectada.", opTok.Linea);
+                        ReportarError("Error Semántico [Lógica]: División entre cero detectada.", opTok.Linea);
                     }
                 }
 
@@ -695,7 +697,7 @@ namespace Interfaz_Lexico
             {
                 return tipo;
             }
-            return "int"; // Por defecto numérico entero
+            return "desconocido";
         }
 
         // Consulta el valor almacenado de una variable en la tabla interna ObtenerValorVariable()
@@ -713,6 +715,36 @@ namespace Interfaz_Lexico
         {
             if (nodo == null) return;
 
+            // Manejo especial de Asignación: el lado izquierdo es la variable de destino
+            if (nodo.TipoNodo == "Asignacion")
+            {
+                if (nodo.Derecho != null)
+                {
+                    InferirTiposYValores(nodo.Derecho);
+                    nodo.TipoDato = nodo.Derecho.TipoDato;
+                    nodo.ValorCalculado = nodo.Derecho.ValorCalculado;
+                    nodo.TieneError = nodo.Derecho.TieneError;
+
+                    if (nodo.Izquierdo != null)
+                    {
+                        nodo.Izquierdo.TipoDato = nodo.Derecho.TipoDato;
+                        nodo.Izquierdo.ValorCalculado = nodo.Derecho.ValorCalculado;
+                        nodo.Izquierdo.TieneError = nodo.Derecho.TieneError;
+
+                        if (!nodo.Derecho.TieneError && nodo.Derecho.TipoDato != "desconocido")
+                        {
+                            RegistrarVariable(nodo.Izquierdo.Lexema, nodo.Derecho.TipoDato, nodo.Derecho.ValorCalculado);
+                        }
+                        else
+                        {
+                            RegistrarVariable(nodo.Izquierdo.Lexema, "desconocido", null);
+                        }
+                    }
+                }
+                return;
+            }
+
+            // Para los demás nodos, evaluar recursivamente los operandos
             if (nodo.Izquierdo != null) InferirTiposYValores(nodo.Izquierdo);
             if (nodo.Derecho != null) InferirTiposYValores(nodo.Derecho);
 
@@ -722,29 +754,53 @@ namespace Interfaz_Lexico
                 {
                     nodo.TipoDato = nodo.Izquierdo.TipoDato;
                     nodo.ValorCalculado = nodo.Izquierdo.ValorCalculado;
+                    nodo.TieneError = nodo.Izquierdo.TieneError;
+                    nodo.MensajeError = nodo.Izquierdo.MensajeError;
                 }
                 return;
             }
 
-            if (nodo.TipoNodo == "Asignacion")
+            // Verificación semántica de variables cuando se leen como operando
+            if (nodo.TipoNodo == "Identificador")
             {
-                if (nodo.Derecho != null)
+                string nombre = nodo.Lexema;
+                bool registrada = TieneVariable(nombre);
+                string? val = ObtenerValorVariable(nombre);
+                string tipo = ObtenerTipoVariable(nombre);
+
+                if (!registrada)
                 {
-                    nodo.TipoDato = nodo.Derecho.TipoDato;
-                    nodo.ValorCalculado = nodo.Derecho.ValorCalculado;
-                    if (nodo.Izquierdo != null)
-                    {
-                        nodo.Izquierdo.TipoDato = nodo.Derecho.TipoDato;
-                        nodo.Izquierdo.ValorCalculado = nodo.Derecho.ValorCalculado;
-                        // Actualizar en la tabla de símbolos y valores
-                        RegistrarVariable(nodo.Izquierdo.Lexema, nodo.Derecho.TipoDato, nodo.Derecho.ValorCalculado);
-                    }
+                    nodo.TieneError = true;
+                    nodo.TipoDato = "desconocido";
+                    nodo.MensajeError = $"Error Semántico [Alcance]: La variable '{nombre}' no está declarada ni inicializada en el ámbito.";
+                    ReportarError(nodo.MensajeError, lineaActual);
+                }
+                else if (tipo == "desconocido" || string.IsNullOrEmpty(val) || val == "Null")
+                {
+                    nodo.TieneError = true;
+                    nodo.TipoDato = "desconocido";
+                    nodo.MensajeError = $"Error Semántico [Inicialización]: La variable '{nombre}' se utiliza sin haber sido inicializada o contiene un error previo.";
+                    ReportarError(nodo.MensajeError, lineaActual);
                 }
                 return;
             }
 
             if (nodo.TipoNodo == "Operador")
             {
+                // Si algún operando tiene error, propagar el error y detener la operación
+                if (nodo.Izquierdo != null && nodo.Izquierdo.TieneError)
+                {
+                    nodo.TieneError = true;
+                    nodo.TipoDato = "desconocido";
+                    return;
+                }
+                if (nodo.Derecho != null && nodo.Derecho.TieneError)
+                {
+                    nodo.TieneError = true;
+                    nodo.TipoDato = "desconocido";
+                    return;
+                }
+
                 // Operadores unarios (+, -, !, NOT)
                 if (nodo.Derecho == null)
                 {
@@ -786,8 +842,10 @@ namespace Interfaz_Lexico
                     if (nodo.Lexema != "+")
                     {
                         nodo.TieneError = true;
-                        nodo.MensajeError = $"Incompatibilidad de tipos: no se puede aplicar el operador '{nodo.Lexema}' a cadenas de texto.";
-                        ReportarError(nodo.MensajeError);
+                        nodo.TipoDato = "desconocido";
+                        nodo.MensajeError = $"Error Semántico [Tipo de Datos]: Incompatibilidad de tipos: no se puede aplicar el operador '{nodo.Lexema}' a cadenas de texto.";
+                        ReportarError(nodo.MensajeError, lineaActual);
+                        return;
                     }
                     else
                     {
@@ -803,9 +861,19 @@ namespace Interfaz_Lexico
                     else
                     {
                         nodo.TieneError = true;
-                        nodo.MensajeError = $"Incompatibilidad de tipos: no se puede aplicar el operador aritmético '{nodo.Lexema}' a valores booleanos.";
-                        ReportarError(nodo.MensajeError);
+                        nodo.TipoDato = "desconocido";
+                        nodo.MensajeError = $"Error Semántico [Tipo de Datos]: Incompatibilidad de tipos: no se puede aplicar el operador aritmético '{nodo.Lexema}' a valores booleanos ('{tipoIzq}' {nodo.Lexema} '{tipoDer}').";
+                        ReportarError(nodo.MensajeError, lineaActual);
+                        return;
                     }
+                }
+                else if (tipoIzq == "desconocido" || tipoDer == "desconocido")
+                {
+                    nodo.TieneError = true;
+                    nodo.TipoDato = "desconocido";
+                    nodo.MensajeError = $"Error Semántico [Tipo de Datos]: Incompatibilidad o tipo desconocido en la operación '{nodo.Lexema}'.";
+                    ReportarError(nodo.MensajeError, lineaActual);
+                    return;
                 }
                 else
                 {
@@ -831,6 +899,16 @@ namespace Interfaz_Lexico
                 // Cálculo constante si ambos lados tienen valor
                 string valIzqStr = nodo.Izquierdo?.ValorCalculado ?? "";
                 string valDerStr = nodo.Derecho?.ValorCalculado ?? "";
+
+                // Validación semántica de División entre cero (Error de Lógica)
+                if ((nodo.Lexema == "/" || nodo.Lexema == "%") && double.TryParse(valDerStr, NumberStyles.Any, CultureInfo.InvariantCulture, out double dCero) && dCero == 0)
+                {
+                    nodo.TieneError = true;
+                    nodo.TipoDato = "desconocido";
+                    nodo.MensajeError = "Error Semántico [Lógica]: División entre cero detectada.";
+                    ReportarError(nodo.MensajeError, lineaActual);
+                    return;
+                }
 
                 bool esBoolIzq = bool.TryParse(valIzqStr, out bool bIzq);
                 bool esBoolDer = bool.TryParse(valDerStr, out bool bDer);
@@ -896,6 +974,16 @@ namespace Interfaz_Lexico
                                 _ => 0
                             };
 
+                            // Comprobación de desbordamiento de memoria / recurso numérico (Punto 1.7)
+                            if (double.IsInfinity(resultadoCalc) || double.IsNaN(resultadoCalc) || (nodo.TipoDato == "int" && Math.Abs(resultadoCalc) > int.MaxValue))
+                            {
+                                nodo.TieneError = true;
+                                nodo.TipoDato = "desconocido";
+                                nodo.MensajeError = "Error Semántico [Recurso]: Desbordamiento de memoria o valor numérico fuera del rango soportado.";
+                                ReportarError(nodo.MensajeError, lineaActual);
+                                return;
+                            }
+
                             nodo.ValorCalculado = FormatearNumeroConSigno(resultadoCalc, nodo.TipoDato == "int");
                         }
                     }
@@ -958,9 +1046,11 @@ namespace Interfaz_Lexico
         }
 
         // Registra un error semántico con su línea correspondiente en la lista de errores ReportarError()
-        private void ReportarError(string mensaje, int linea = 1)
+        private void ReportarError(string mensaje, int? linea = null)
         {
-            errores.Add($"Línea {linea}: Error Semántico: {mensaje}");
+            int lin = linea ?? lineaActual;
+            string msgConPrefijo = mensaje.StartsWith("Error Semántico") ? mensaje : $"Error Semántico: {mensaje}";
+            errores.Add($"Línea {lin}: {msgConPrefijo}");
         }
 
         #endregion
@@ -1014,19 +1104,21 @@ namespace Interfaz_Lexico
                 string lineaSinPuntoComa = lineaTexto.Trim().Trim('"').Trim(';').Trim();
                 if (string.IsNullOrEmpty(lineaSinPuntoComa)) continue;
 
-                // 1. Asignación: ID = Expresion
+                // 1. Asignación: ID = Expresion (asegurar que no sea IF, WHILE, FOR, etc.)
+                bool esEstructuraControl = System.Text.RegularExpressions.Regex.IsMatch(lineaSinPuntoComa, @"^\s*\b(IF|WHILE|FOR|PRINT|READ)\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
                 int idxIgual = lineaSinPuntoComa.IndexOf('=');
-                if (idxIgual > 0 && !lineaSinPuntoComa.Substring(0, idxIgual).Contains("==") &&
-                    !lineaSinPuntoComa.Contains("IF") && !lineaSinPuntoComa.Contains("WHILE"))
+                if (idxIgual > 0 && !lineaSinPuntoComa.Substring(0, idxIgual).Contains("==") && !esEstructuraControl)
                 {
                     // En un FOR: FOR contador = FROM +1 UNTIL contador <= +10 INTERVAL +1
-                    if (lineaSinPuntoComa.ToUpper().Contains("FOR") && lineaSinPuntoComa.ToUpper().Contains("FROM"))
+                    if (System.Text.RegularExpressions.Regex.IsMatch(lineaSinPuntoComa, @"\bFOR\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase) &&
+                        System.Text.RegularExpressions.Regex.IsMatch(lineaSinPuntoComa, @"\bFROM\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
                     {
                         int idxFrom = lineaSinPuntoComa.ToUpper().IndexOf("FROM");
                         int idxUntil = lineaSinPuntoComa.ToUpper().IndexOf("UNTIL");
                         if (idxFrom > 0)
                         {
-                            string asigFor = lineaSinPuntoComa.Substring(0, idxFrom).Replace("FOR", "").Trim();
+                            string asigFor = lineaSinPuntoComa.Substring(0, idxFrom).Replace("FOR", "", StringComparison.OrdinalIgnoreCase).Trim();
                             if (idxUntil > idxFrom)
                             {
                                 string valFrom = lineaSinPuntoComa.Substring(idxFrom + 4, idxUntil - (idxFrom + 4)).Trim();
@@ -1054,9 +1146,9 @@ namespace Interfaz_Lexico
                 }
 
                 // 2. PRINT Expresion
-                if (lineaSinPuntoComa.ToUpper().StartsWith("PRINT"))
+                if (System.Text.RegularExpressions.Regex.IsMatch(lineaSinPuntoComa, @"^\s*PRINT\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
                 {
-                    string exprPrint = lineaSinPuntoComa.Substring(5).Trim();
+                    string exprPrint = System.Text.RegularExpressions.Regex.Replace(lineaSinPuntoComa, @"^\s*PRINT\b", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase).Trim();
                     if (!string.IsNullOrEmpty(exprPrint))
                     {
                         var resPrint = AnalizarExpresion(exprPrint, i + 1);
@@ -1066,9 +1158,9 @@ namespace Interfaz_Lexico
                 }
 
                 // 3. IF Condicion THEN
-                if (lineaSinPuntoComa.ToUpper().StartsWith("IF"))
+                if (System.Text.RegularExpressions.Regex.IsMatch(lineaSinPuntoComa, @"^\s*IF\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
                 {
-                    string cond = lineaSinPuntoComa.Substring(2).Trim();
+                    string cond = System.Text.RegularExpressions.Regex.Replace(lineaSinPuntoComa, @"^\s*IF\b", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase).Trim();
                     int idxThen = cond.ToUpper().IndexOf("THEN");
                     if (idxThen > 0) cond = cond.Substring(0, idxThen).Trim();
 
@@ -1081,9 +1173,9 @@ namespace Interfaz_Lexico
                 }
 
                 // 4. WHILE Condicion DO
-                if (lineaSinPuntoComa.ToUpper().StartsWith("WHILE"))
+                if (System.Text.RegularExpressions.Regex.IsMatch(lineaSinPuntoComa, @"^\s*WHILE\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
                 {
-                    string cond = lineaSinPuntoComa.Substring(5).Trim();
+                    string cond = System.Text.RegularExpressions.Regex.Replace(lineaSinPuntoComa, @"^\s*WHILE\b", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase).Trim();
                     int idxDo = cond.ToUpper().IndexOf("DO");
                     if (idxDo > 0) cond = cond.Substring(0, idxDo).Trim();
 

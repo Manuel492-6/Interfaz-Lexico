@@ -32,6 +32,9 @@ namespace Interfaz_Lexico
             Nombre = new DataGridViewTextBoxColumn();
             TipoDato = new DataGridViewTextBoxColumn();
             Valor = new DataGridViewTextBoxColumn();
+            Direccion = new DataGridViewTextBoxColumn();
+            Bytes = new DataGridViewTextBoxColumn();
+            Ambito = new DataGridViewTextBoxColumn();
             dgtErrores = new DataGridView();
             Linea = new DataGridViewTextBoxColumn();
             Error = new DataGridViewTextBoxColumn();
@@ -88,13 +91,13 @@ namespace Interfaz_Lexico
             dgtTablaDeSimbolos.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle1;
             dgtTablaDeSimbolos.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
             dgtTablaDeSimbolos.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dgtTablaDeSimbolos.Columns.AddRange(new DataGridViewColumn[] { Identificador, Nombre, TipoDato, Valor });
+            dgtTablaDeSimbolos.Columns.AddRange(new DataGridViewColumn[] { Identificador, Nombre, TipoDato, Valor, Direccion, Bytes, Ambito });
             dgtTablaDeSimbolos.GridColor = SystemColors.InactiveCaptionText;
-            dgtTablaDeSimbolos.Location = new Point(26, 546);
+            dgtTablaDeSimbolos.Location = new Point(12, 546);
             dgtTablaDeSimbolos.Name = "dgtTablaDeSimbolos";
             dgtTablaDeSimbolos.RowHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
             dgtTablaDeSimbolos.RowHeadersWidth = 51;
-            dgtTablaDeSimbolos.Size = new Size(552, 188);
+            dgtTablaDeSimbolos.Size = new Size(620, 188);
             dgtTablaDeSimbolos.TabIndex = 7;
             // 
             // Identificador
@@ -127,7 +130,31 @@ namespace Interfaz_Lexico
             Valor.MinimumWidth = 6;
             Valor.Name = "Valor";
             Valor.ReadOnly = true;
-            Valor.Width = 125;
+            Valor.Width = 90;
+            // 
+            // Direccion
+            // 
+            Direccion.HeaderText = "Dirección";
+            Direccion.MinimumWidth = 6;
+            Direccion.Name = "Direccion";
+            Direccion.ReadOnly = true;
+            Direccion.Width = 90;
+            // 
+            // Bytes
+            // 
+            Bytes.HeaderText = "Peso (Bytes)";
+            Bytes.MinimumWidth = 6;
+            Bytes.Name = "Bytes";
+            Bytes.ReadOnly = true;
+            Bytes.Width = 90;
+            // 
+            // Ambito
+            // 
+            Ambito.HeaderText = "Ámbito";
+            Ambito.MinimumWidth = 6;
+            Ambito.Name = "Ambito";
+            Ambito.ReadOnly = true;
+            Ambito.Width = 80;
             // 
             // dgtErrores
             // 
@@ -135,10 +162,10 @@ namespace Interfaz_Lexico
             dgtErrores.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle2;
             dgtErrores.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgtErrores.Columns.AddRange(new DataGridViewColumn[] { Linea, Error });
-            dgtErrores.Location = new Point(600, 546);
+            dgtErrores.Location = new Point(660, 546);
             dgtErrores.Name = "dgtErrores";
             dgtErrores.RowHeadersWidth = 51;
-            dgtErrores.Size = new Size(881, 188);
+            dgtErrores.Size = new Size(716, 188);
             dgtErrores.TabIndex = 8;
             // 
             // Linea
@@ -261,7 +288,7 @@ namespace Interfaz_Lexico
             // 
             label3.AutoSize = true;
             label3.Font = new Font("Arial", 13.8F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label3.Location = new Point(600, 502);
+            label3.Location = new Point(660, 502);
             label3.Name = "label3";
             label3.Size = new Size(94, 27);
             label3.TabIndex = 18;
@@ -317,7 +344,7 @@ namespace Interfaz_Lexico
             lblOperacionesCodigo.ForeColor = Color.Black;
             lblOperacionesCodigo.Location = new Point(15, 26);
             lblOperacionesCodigo.Name = "lblOperacionesCodigo";
-            lblOperacionesCodigo.Size = new Size(245, 18);
+            lblOperacionesCodigo.Size = new Size(251, 18);
             lblOperacionesCodigo.TabIndex = 0;
             lblOperacionesCodigo.Text = "Operaciones en Programa Fuente:";
             // 
@@ -339,7 +366,7 @@ namespace Interfaz_Lexico
             lblEstadoSemantico.ForeColor = Color.ForestGreen;
             lblEstadoSemantico.Location = new Point(15, 82);
             lblEstadoSemantico.Name = "lblEstadoSemantico";
-            lblEstadoSemantico.Size = new Size(245, 18);
+            lblEstadoSemantico.Size = new Size(236, 18);
             lblEstadoSemantico.TabIndex = 2;
             lblEstadoSemantico.Text = "Estado: Presiona 'Analizar Todo'";
             // 
@@ -425,6 +452,9 @@ namespace Interfaz_Lexico
         private System.Windows.Forms.DataGridViewTextBoxColumn Nombre;
         private System.Windows.Forms.DataGridViewTextBoxColumn TipoDato;
         private System.Windows.Forms.DataGridViewTextBoxColumn Valor;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Direccion;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Bytes;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Ambito;
         private System.Windows.Forms.DataGridView dgtErrores;
         private System.Windows.Forms.DataGridViewTextBoxColumn Linea;
         private System.Windows.Forms.DataGridViewTextBoxColumn Error;

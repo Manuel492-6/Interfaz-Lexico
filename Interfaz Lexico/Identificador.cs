@@ -40,6 +40,30 @@ namespace Interfaz_Lexico
 			set { _Valor = value; }
 		}
 
+		private string _DireccionMemoria = "0x0000";
+
+		public string DireccionMemoria
+		{
+			get { return _DireccionMemoria; }
+			set { _DireccionMemoria = value; }
+		}
+
+		private int _Bytes = 4;
+
+		public int Bytes
+		{
+			get { return _Bytes; }
+			set { _Bytes = value; }
+		}
+
+		private string _Ambito = "Global";
+
+		public string Ambito
+		{
+			get { return _Ambito; }
+			set { _Ambito = value; }
+		}
+
 
 		// Compara si dos identificadores son iguales según su nombre Equals()
 		public bool Equals(Identificador other)
