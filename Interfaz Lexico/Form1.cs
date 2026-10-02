@@ -12,7 +12,7 @@ namespace Interfaz_Lexico
         string NombreArchivo2 = "..\\..\\..\\..\\ArchivosTexto\\Archivo2.txt";
         List<Identificador> ListaDeIdentificadores = new List<Identificador>();
 
-        // Cambia aquí los datos a los reales de tu gestor
+        // Cambia aquí los datos a los reales de tu gestor.
         private string ConexionBD = @"Server=DESKTOP-3G6AMVL\SQLEXPRESS; Database=NovaNyx; Integrated Security=True; TrustServerCertificate=True;";
 
         ClaseListaSimpleOrdenada<Identificador> ListaDeIdentificadoresOrdenada = new ClaseListaSimpleOrdenada<Identificador>();
