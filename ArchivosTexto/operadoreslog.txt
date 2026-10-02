@@ -1,0 +1,7 @@
+"START ;"
+"nota = 85 ;"
+"asistencia = 90 ;"
+"IF ( nota \u003E= 70 ) AND ( asistencia \u003E= 80 ) THEN"
+"PRINT \u0022Aprobado\u0022 ;"
+"ENDIF ;"
+"END"

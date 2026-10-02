@@ -1,0 +1,7 @@
+"START ;"
+"total = 1 ;"
+"EXECUTE"
+"total = total * 2 ;"
+"PRINT total ;"
+"UNTIL total \u003E= 16 ;"
+"END ;"

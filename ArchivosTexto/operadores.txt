@@ -1,0 +1,5 @@
+"START ;"
+"x = 10 ;"
+"y = 20 ;"
+"resultado = ( x \u002B y ) * 2 ;"
+"END ;"

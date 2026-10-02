@@ -1,0 +1,7 @@
+"START ;"
+"READ val1 , val2 ;"
+"val1 = \u002B1 ;"
+"val2 = -9 ;"
+"suma = val1 \u002B val2 ;"
+"PRINT \u0022La_suma_es\u0022 , suma ;"
+"END ;"

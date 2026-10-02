@@ -1,0 +1,7 @@
+"START ;"
+"num = 0 ;"
+"DO WHILE num \u003C 3"
+"num = num \u002B 1 ;"
+"PRINT num ;"
+"ENDDO ;"
+"END ;"

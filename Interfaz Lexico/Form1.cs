@@ -82,9 +82,32 @@ namespace Interfaz_Lexico
             { "TRUE", "RW26" }
         };
 
+        // Diccionario oficial de operadores lógicos (AND, OR, NOT) del lenguaje NovaNyx
+        public static readonly Dictionary<string, string> MapaOperadoresLogicos = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "AND", "LO1" },
+            { "OR", "LO2" },
+            { "NOT", "LO3" },
+            { "&&", "LO1" },
+            { "||", "LO2" },
+            { "!", "LO3" }
+        };
+
         // Registra o recupera un identificador (variable) y concatena su token 'IDVn' en la lista RegistrarVariableEnTokens()
         private void RegistrarVariableEnTokens(string nombreVariable, ref string nuevoToken)
         {
+            // Salvaguarda: operadores lógicos o palabras reservadas jamás deben registrarse como variables
+            if (MapaOperadoresLogicos.TryGetValue(nombreVariable, out string? loCodigo))
+            {
+                nuevoToken += loCodigo + " ";
+                return;
+            }
+            if (MapaPalabrasReservadas.TryGetValue(nombreVariable, out string? rwCodigo))
+            {
+                nuevoToken += rwCodigo + " ";
+                return;
+            }
+
             Identificador nuevoIdentificador = new Identificador
             {
                 Nombre = nombreVariable,
@@ -187,15 +210,22 @@ namespace Interfaz_Lexico
                     continue;
                 }
 
-                // 2. Si tiene formato de identificador/variable (letras, dígitos, _):
-                // Como ya se descartó que sea una palabra reservada exacta, es una variable legítima (ej. STAR, EN, E, FO, WHIL)
+                // 2. Si coincide con un operador lógico oficial (AND, OR, NOT, etc.):
+                if (MapaOperadoresLogicos.TryGetValue(palabraActual, out string? loCodigo))
+                {
+                    NuevoToken += loCodigo + " ";
+                    continue;
+                }
+
+                // 3. Si tiene formato de identificador/variable (letras, dígitos, _):
+                // Como ya se descartó que sea una palabra reservada o un operador lógico, es una variable legítima
                 if (System.Text.RegularExpressions.Regex.IsMatch(palabraActual, @"^[a-zA-Z_][a-zA-Z0-9_]*$"))
                 {
                     RegistrarVariableEnTokens(palabraActual, ref NuevoToken);
                     continue;
                 }
 
-                // 3. Para los demás elementos (operadores, números con signo, delimitadores): procesar con matriz SQL
+                // 4. Para los demás elementos (operadores, números con signo, delimitadores): procesar con matriz SQL
                 int EstadoActual = 1;
                 int SiguienteEstado = 1;
                 int columna = 0;
@@ -243,7 +273,14 @@ namespace Interfaz_Lexico
                         string tipoAcepta = matrizCompleta[SiguienteEstado, matrizCompleta.GetLength(1) - 1];
                         if (tipoAcepta == "IDV")
                         {
-                            RegistrarVariableEnTokens(palabraActual, ref NuevoToken);
+                            if (MapaOperadoresLogicos.TryGetValue(palabraActual, out string? loCodigoMatriz))
+                            {
+                                NuevoToken += loCodigoMatriz + " ";
+                            }
+                            else
+                            {
+                                RegistrarVariableEnTokens(palabraActual, ref NuevoToken);
+                            }
                         }
                         else
                         {
@@ -420,6 +457,7 @@ namespace Interfaz_Lexico
             {
                 foreach (var id in ListaDeIdentificadoresOrdenada)
                 {
+                    if (MapaOperadoresLogicos.ContainsKey(id.Nombre)) continue;
                     string? tipoInicial = (!string.IsNullOrEmpty(id.TipoDeDato) && id.TipoDeDato != "Null" && id.TipoDeDato != "desconocido") ? id.TipoDeDato : null;
                     string? valInicial = (!string.IsNullOrEmpty(id.Valor) && id.Valor != "Null") ? id.Valor : null;
                     if (tipoInicial != null)
@@ -474,6 +512,20 @@ namespace Interfaz_Lexico
         // Guarda el código escrito en el editor de texto en un archivo en disco btnGuardarPrograma_Click()
         private void btnGuardarPrograma_Click(object sender, EventArgs e)
         {
+            
+            FileDialog panel = new SaveFileDialog();
+            panel.Filter = "Archivos de texto (*.txt)|*.txt|Todos los archivos (*.*)|*.*";
+            panel.Title = "Guardar archivo de código fuente";
+            panel.InitialDirectory = Path.GetFullPath("..\\..\\..\\..\\ArchivosTexto");
+            if (panel.ShowDialog() == DialogResult.OK)
+            {
+                NombreArchivo = panel.FileName;
+            }
+            else
+            {
+                MessageBox.Show("No se seleccionó ningún archivo. Se guardará el archivo predeterminado.");
+            }
+
             Archivo<string> archivoTexto = new Archivo<string>(NombreArchivo);
 
             if (File.Exists(archivoTexto.NombreArchivo))
@@ -495,6 +547,19 @@ namespace Interfaz_Lexico
         // Carga el contenido de un archivo de texto en el editor de código fuente btnCargarPrograma_Click()
         private void btnCargarPrograma_Click(object sender, EventArgs e)
         {
+            FileDialog Panel = new OpenFileDialog();
+            Panel.Filter = "Archivos de texto (*.txt)|*.txt|Todos los archivos (*.*)|*.*";
+            Panel.Title = "Seleccionar archivo de código fuente";
+            Panel.InitialDirectory = Path.GetFullPath("..\\..\\..\\..\\ArchivosTexto");
+            if(Panel.ShowDialog() == DialogResult.OK)
+            {
+                NombreArchivo = Panel.FileName;
+            }
+            else
+            {
+                MessageBox.Show("No se seleccionó ningún archivo. Se cargará el archivo predeterminado.");
+            }
+
             Archivo<string> archivoTexto = new Archivo<string>(NombreArchivo);
             archivoTexto.HacerModoLectura();
 
@@ -605,6 +670,7 @@ namespace Interfaz_Lexico
             {
                 foreach (var id in ListaDeIdentificadoresOrdenada)
                 {
+                    if (MapaOperadoresLogicos.ContainsKey(id.Nombre)) continue;
                     if (!analizadorSemantico.TieneVariable(id.Nombre))
                     {
                         string? tipoInicial = (!string.IsNullOrEmpty(id.TipoDeDato) && id.TipoDeDato != "Null" && id.TipoDeDato != "desconocido") ? id.TipoDeDato : null;
@@ -672,6 +738,7 @@ namespace Interfaz_Lexico
             {
                 foreach (var identificador in ListaDeIdentificadoresOrdenada)
                 {
+                    if (MapaOperadoresLogicos.ContainsKey(identificador.Nombre)) continue;
                     string tipoSemantico = analizadorSemantico.ObtenerTipo(identificador.Nombre);
                     if (!string.IsNullOrEmpty(tipoSemantico) && tipoSemantico != "Null")
                     {
@@ -712,6 +779,7 @@ namespace Interfaz_Lexico
             dgtTablaDeSimbolos.Rows.Clear();
             foreach (var identificador in ListaDeIdentificadoresOrdenada)
             {
+                if (MapaOperadoresLogicos.ContainsKey(identificador.Nombre)) continue;
                 dgtTablaDeSimbolos.Rows.Add(
                     identificador.NumeroDeIdentificador,
                     identificador.Nombre,
