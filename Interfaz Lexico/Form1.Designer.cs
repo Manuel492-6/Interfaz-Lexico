@@ -242,7 +242,7 @@ namespace Interfaz_Lexico
             // 
             // btnGuardarArchivo
             // 
-            btnGuardarArchivo.Location = new Point(802, 432);
+            btnGuardarArchivo.Location = new Point(956, 432);
             btnGuardarArchivo.Name = "btnGuardarArchivo";
             btnGuardarArchivo.Size = new Size(136, 48);
             btnGuardarArchivo.TabIndex = 12;
@@ -252,7 +252,7 @@ namespace Interfaz_Lexico
             // 
             // btnAnalizar
             // 
-            btnAnalizar.Location = new Point(593, 432);
+            btnAnalizar.Location = new Point(622, 432);
             btnAnalizar.Name = "btnAnalizar";
             btnAnalizar.Size = new Size(136, 48);
             btnAnalizar.TabIndex = 22;
@@ -288,7 +288,7 @@ namespace Interfaz_Lexico
             lblNovaNyxVersion.Name = "lblNovaNyxVersion";
             lblNovaNyxVersion.Size = new Size(91, 20);
             lblNovaNyxVersion.TabIndex = 15;
-            lblNovaNyxVersion.Text = "Versión 1.4.3";
+            lblNovaNyxVersion.Text = "Versión 1.6.1";
             // 
             // label1
             // 
@@ -463,7 +463,7 @@ namespace Interfaz_Lexico
             tabCodigoIntermedio.Location = new Point(4, 27);
             tabCodigoIntermedio.Name = "tabCodigoIntermedio";
             tabCodigoIntermedio.Padding = new Padding(3);
-            tabCodigoIntermedio.Size = new Size(397, 561);
+            tabCodigoIntermedio.Size = new Size(447, 614);
             tabCodigoIntermedio.TabIndex = 1;
             tabCodigoIntermedio.Text = "⚡ Código Intermedio";
             // 
@@ -538,7 +538,7 @@ namespace Interfaz_Lexico
             dgtCuadruplos.Name = "dgtCuadruplos";
             dgtCuadruplos.RowHeadersVisible = false;
             dgtCuadruplos.RowHeadersWidth = 51;
-            dgtCuadruplos.Size = new Size(385, 412);
+            dgtCuadruplos.Size = new Size(435, 412);
             dgtCuadruplos.TabIndex = 5;
             // 
             // colNum
@@ -616,7 +616,7 @@ namespace Interfaz_Lexico
             tabPage1.Padding = new Padding(3);
             tabPage1.Size = new Size(870, 268);
             tabPage1.TabIndex = 0;
-            tabPage1.Text = "tabPage1";
+            tabPage1.Text = "Tabla de simbolos";
             tabPage1.UseVisualStyleBackColor = true;
             // 
             // tabPage2
@@ -628,7 +628,7 @@ namespace Interfaz_Lexico
             tabPage2.Padding = new Padding(3);
             tabPage2.Size = new Size(870, 268);
             tabPage2.TabIndex = 1;
-            tabPage2.Text = "tabPage2";
+            tabPage2.Text = "Tabla de errores";
             tabPage2.UseVisualStyleBackColor = true;
             // 
             // Form1
@@ -655,7 +655,7 @@ namespace Interfaz_Lexico
             Controls.Add(richProgramaFuente);
             Controls.Add(richArchivoDeTokens);
             Name = "Form1";
-            Text = "NovaNyx 1.4.3";
+            Text = "NovaNyx 1.6.1";
             Load += Form1_Load;
             ((System.ComponentModel.ISupportInitialize)dgtTablaDeSimbolos).EndInit();
             ((System.ComponentModel.ISupportInitialize)dgtErrores).EndInit();
