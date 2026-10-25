@@ -23,7 +23,18 @@ namespace Interfaz_Lexico
         public List<string> ErroresSemanticos { get; set; } = new List<string>();
         public string TipoDatoResultante { get; set; } = "desconocido";
         public string? ValorCalculado { get; set; }
+        public string NotacionPostfija { get; set; } = "";
+        public List<Cuadruplo> Cuadruplos { get; set; } = new List<Cuadruplo>();
         public bool EsValida => ErroresSemanticos.Count == 0;
+    }
+
+    public class DefinicionFuncion
+    {
+        public string Nombre { get; set; } = "";
+        public List<string> Parametros { get; set; } = new List<string>();
+        public List<string> Instrucciones { get; set; } = new List<string>();
+        public string TipoRetorno { get; set; } = "int";
+        public string? ExpresionRetorno { get; set; }
     }
 
     public class AnalizadorSemanticoJerarquia
@@ -36,6 +47,9 @@ namespace Interfaz_Lexico
         private int lineaActual = 1;
         private Dictionary<string, string> tablaTipos = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         private Dictionary<string, string> tablaValores = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        private Dictionary<string, string> tablaRetornoFunciones = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        private Dictionary<string, string> tablaValoresRetornoFunciones = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        private Dictionary<string, DefinicionFuncion> definicionesFunciones = new Dictionary<string, DefinicionFuncion>(StringComparer.OrdinalIgnoreCase);
 
         // Inicializa una nueva instancia del analizador semántico con la tabla de tipos AnalizadorSemanticoJerarquia()
         public AnalizadorSemanticoJerarquia(Dictionary<string, string>? variablesConTipo = null)
@@ -60,6 +74,176 @@ namespace Interfaz_Lexico
             {
                 tablaValores[nombre] = valor;
             }
+        }
+
+        // Registra el tipo de dato dinámico que retorna una función y opcionalmente su valor calculado
+        public void RegistrarRetornoFuncion(string nombreFuncion, string tipoRetorno, string? valorRetorno = null)
+        {
+            if (!string.IsNullOrEmpty(tipoRetorno) && tipoRetorno != "desconocido")
+            {
+                tablaRetornoFunciones[nombreFuncion] = tipoRetorno;
+                tablaTipos[nombreFuncion] = tipoRetorno;
+            }
+            if (valorRetorno != null)
+            {
+                tablaValoresRetornoFunciones[nombreFuncion] = valorRetorno;
+                tablaValores[nombreFuncion] = valorRetorno;
+            }
+        }
+
+        // Obtiene el tipo de dato de retorno configurado o inferido para una función
+        public string ObtenerRetornoFuncion(string nombreFuncion)
+        {
+            if (tablaRetornoFunciones.TryGetValue(nombreFuncion, out string? tipo) && !string.IsNullOrEmpty(tipo) && tipo != "desconocido")
+            {
+                return tipo;
+            }
+            if (tablaTipos.TryGetValue(nombreFuncion, out string? t) && !string.IsNullOrEmpty(t) && t != "desconocido" && t != "Null")
+            {
+                return t;
+            }
+            return "int";
+        }
+
+        // Obtiene el valor calculado de retorno si la función retorna una constante conocida
+        public string? ObtenerValorRetornoFuncion(string nombreFuncion)
+        {
+            if (tablaValoresRetornoFunciones.TryGetValue(nombreFuncion, out string? val) && !string.IsNullOrEmpty(val))
+            {
+                return val;
+            }
+            if (tablaValores.TryGetValue(nombreFuncion, out string? v) && !string.IsNullOrEmpty(v))
+            {
+                return v;
+            }
+            return null;
+        }
+
+        // Registra la definición completa de una función para ejecución dinámica
+        public void RegistrarDefinicionFuncion(DefinicionFuncion def)
+        {
+            if (def != null && !string.IsNullOrWhiteSpace(def.Nombre))
+            {
+                definicionesFunciones[def.Nombre] = def;
+                if (!string.IsNullOrEmpty(def.TipoRetorno) && def.TipoRetorno != "desconocido")
+                {
+                    RegistrarRetornoFuncion(def.Nombre, def.TipoRetorno);
+                }
+            }
+        }
+
+        // Obtiene la definición de una función si está registrada
+        public DefinicionFuncion? ObtenerDefinicionFuncion(string nombre)
+        {
+            if (definicionesFunciones.TryGetValue(nombre, out var def))
+            {
+                return def;
+            }
+            return null;
+        }
+
+        // Crea un sub-ámbito aislado para ejecutar funciones con sus argumentos
+        public AnalizadorSemanticoJerarquia CrearSubAmbito()
+        {
+            var sub = new AnalizadorSemanticoJerarquia();
+            foreach (var kvp in this.tablaTipos) sub.tablaTipos[kvp.Key] = kvp.Value;
+            foreach (var kvp in this.tablaValores) sub.tablaValores[kvp.Key] = kvp.Value;
+            foreach (var kvp in this.tablaRetornoFunciones) sub.tablaRetornoFunciones[kvp.Key] = kvp.Value;
+            foreach (var kvp in this.tablaValoresRetornoFunciones) sub.tablaValoresRetornoFunciones[kvp.Key] = kvp.Value;
+            foreach (var kvp in this.definicionesFunciones) sub.definicionesFunciones[kvp.Key] = kvp.Value;
+            return sub;
+        }
+
+        // Ejecuta dinámicamente el cuerpo de una función con los argumentos pasados
+        public (string TipoRetorno, string? ValorRetorno) EjecutarFuncion(string nombreFunc, List<NodoJerarquia> argumentos)
+        {
+            if (!definicionesFunciones.TryGetValue(nombreFunc, out var def) || def == null)
+            {
+                string tRet = ObtenerRetornoFuncion(nombreFunc);
+                string? vRet = ObtenerValorRetornoFuncion(nombreFunc);
+                if (string.IsNullOrEmpty(vRet))
+                {
+                    vRet = tRet switch
+                    {
+                        "string" => "\"\"",
+                        "bool" => "TRUE",
+                        "float" => "+0.0",
+                        _ => "0"
+                    };
+                }
+                return (tRet, vRet);
+            }
+
+            var subAmbito = CrearSubAmbito();
+
+            // 1. Enlazar los valores de los argumentos con los parámetros formales
+            for (int i = 0; i < def.Parametros.Count; i++)
+            {
+                string pNombre = def.Parametros[i];
+                string tipoArg = "int";
+                string valArg = "0";
+
+                if (i < argumentos.Count)
+                {
+                    var arg = argumentos[i];
+                    tipoArg = !string.IsNullOrEmpty(arg.TipoDato) && arg.TipoDato != "desconocido" ? arg.TipoDato : "int";
+                    valArg = arg.ValorCalculado ?? (tipoArg == "string" ? "\"\"" : "0");
+                }
+
+                subAmbito.RegistrarVariable(pNombre, tipoArg, valArg);
+                this.RegistrarVariable(pNombre, tipoArg, valArg);
+            }
+
+            // 2. Ejecutar instrucciones del cuerpo en el sub-ámbito
+            foreach (var instr in def.Instrucciones)
+            {
+                if (string.IsNullOrWhiteSpace(instr)) continue;
+                subAmbito.AnalizarExpresion(instr);
+            }
+
+            // Sincronizar variables calculadas en el cuerpo con el ámbito padre
+            foreach (var kvp in subAmbito.tablaTipos)
+            {
+                this.tablaTipos[kvp.Key] = kvp.Value;
+            }
+            foreach (var kvp in subAmbito.tablaValores)
+            {
+                this.tablaValores[kvp.Key] = kvp.Value;
+            }
+
+            // 3. Evaluar la expresión de retorno
+            string tipoFinal = def.TipoRetorno;
+            string? valFinal = null;
+
+            if (!string.IsNullOrWhiteSpace(def.ExpresionRetorno))
+            {
+                var resRet = subAmbito.AnalizarExpresion(def.ExpresionRetorno);
+                if (resRet.ArbolRaiz != null)
+                {
+                    tipoFinal = resRet.TipoDatoResultante;
+                    valFinal = resRet.ValorCalculado;
+                }
+            }
+
+            if (string.IsNullOrEmpty(valFinal))
+            {
+                valFinal = ObtenerValorRetornoFuncion(nombreFunc);
+            }
+            if (string.IsNullOrEmpty(valFinal))
+            {
+                valFinal = tipoFinal switch
+                {
+                    "string" => "\"\"",
+                    "bool" => "TRUE",
+                    "float" => "+0.0",
+                    _ => "0"
+                };
+            }
+
+            RegistrarRetornoFuncion(nombreFunc, tipoFinal, valFinal);
+            RegistrarVariable(nombreFunc, tipoFinal, valFinal);
+
+            return (tipoFinal, valFinal);
         }
 
         // Verifica si una variable se encuentra registrada con un tipo válido en la tabla TieneVariable()
@@ -141,6 +325,12 @@ namespace Interfaz_Lexico
 
                 // Generar los pasos de resolución por jerarquía
                 GenerarPasosJerarquia(raiz);
+
+                // Generar Notación Postfija (RPN) y Cuádruplos (C3D)
+                resultado.NotacionPostfija = GeneradorCodigoIntermedio.GenerarNotacionPostfija(raiz);
+                int tempCont = 1;
+                int cuadCont = 1;
+                resultado.Cuadruplos = GeneradorCodigoIntermedio.GenerarCuadruplos(raiz, ref tempCont, ref cuadCont);
             }
 
             resultado.ArbolRaiz = raiz;
@@ -168,6 +358,7 @@ namespace Interfaz_Lexico
                 else if (t.Tipo.StartsWith("AO^")) lex = "^";
                 else if (t.Tipo.StartsWith("SC(")) lex = "(";
                 else if (t.Tipo.StartsWith("SC)")) lex = ")";
+                else if (t.Tipo.StartsWith("SC,") || t.Lexema == ",") lex = ",";
                 else if (t.Tipo.StartsWith("RW26") || t.Lexema.Equals("TRUE", StringComparison.OrdinalIgnoreCase)) lex = "TRUE";
                 else if (t.Tipo.StartsWith("RW08") || t.Lexema.Equals("FALSE", StringComparison.OrdinalIgnoreCase)) lex = "FALSE";
                 else if (t.Tipo.StartsWith("LO1") || t.Lexema.Equals("AND", StringComparison.OrdinalIgnoreCase) || t.Lexema == "&&") lex = "AND";
@@ -215,6 +406,13 @@ namespace Interfaz_Lexico
                 else if (c == ')')
                 {
                     list.Add(new TokenSemantico { Lexema = ")", Tipo = "PAR_CIERRA", Linea = linea, Posicion = i });
+                    i++;
+                    continue;
+                }
+                // Coma (para argumentos de funciones o listas)
+                else if (c == ',')
+                {
+                    list.Add(new TokenSemantico { Lexema = ",", Tipo = "COMA", Linea = linea, Posicion = i });
                     i++;
                     continue;
                 }
@@ -689,13 +887,66 @@ namespace Interfaz_Lexico
                 };
             }
 
-            // 5. IDENTIFICADORES (VARIABLES)
+            // 5. IDENTIFICADORES O LLAMADAS A FUNCIÓN: SUMA(X, Y) o SUMA()
             if (tok.Tipo == "ID")
             {
+                string idNombre = tok.Lexema;
                 pos++;
-                string tipoVar = ObtenerTipoVariable(tok.Lexema);
-                string? valVar = ObtenerValorVariable(tok.Lexema);
-                return new NodoJerarquia(tok.Lexema, "Identificador", 0, "Operando Variable", tipoVar)
+
+                // Si viene '(' inmediatamente después del ID -> Llamada a Función
+                if (pos < tokens.Count && tokens[pos].Tipo == "PAR_ABRE")
+                {
+                    pos++; // consumir '('
+                    List<NodoJerarquia> argumentos = new List<NodoJerarquia>();
+
+                    if (pos < tokens.Count && tokens[pos].Tipo == "PAR_CIERRA")
+                    {
+                        pos++; // consumir ')'
+                    }
+                    else
+                    {
+                        argumentos.Add(ParsearLogico());
+                        while (pos < tokens.Count && (tokens[pos].Tipo == "COMA" || tokens[pos].Lexema == ","))
+                        {
+                            pos++; // consumir ','
+                            argumentos.Add(ParsearLogico());
+                        }
+
+                        if (pos < tokens.Count && tokens[pos].Tipo == "PAR_CIERRA")
+                        {
+                            pos++; // consumir ')'
+                        }
+                        else
+                        {
+                            ReportarError($"Se esperaba ')' al cerrar los argumentos de la función '{idNombre}'.", tok.Linea);
+                        }
+                    }
+
+                    // Se crea el nodo función con retorno dinámico funcional (string, bool, float, int)
+                    string tipoRet = ObtenerRetornoFuncion(idNombre);
+                    string? valRet = ObtenerValorRetornoFuncion(idNombre);
+                    if (string.IsNullOrEmpty(valRet))
+                    {
+                        valRet = tipoRet switch
+                        {
+                            "string" => "\"\"",
+                            "bool" => "TRUE",
+                            "float" => "+0.0",
+                            _ => "0"
+                        };
+                    }
+
+                    NodoJerarquia nodoFunc = new NodoJerarquia(idNombre, "Funcion", 0, $"Llamada Función {idNombre}()", tipoRet)
+                    {
+                        Hijos = argumentos,
+                        ValorCalculado = valRet // Valor representativo o inferido para operar en expresiones
+                    };
+                    return nodoFunc;
+                }
+
+                string tipoVar = ObtenerTipoVariable(idNombre);
+                string? valVar = ObtenerValorVariable(idNombre);
+                return new NodoJerarquia(idNombre, "Identificador", 0, "Operando Variable", tipoVar)
                 {
                     ValorCalculado = valVar
                 };
@@ -781,6 +1032,23 @@ namespace Interfaz_Lexico
                 return;
             }
 
+            // Las llamadas a funciones ejecutan su cuerpo dinámicamente con los argumentos
+            if (nodo.TipoNodo == "Funcion")
+            {
+                foreach (var h in nodo.Hijos)
+                {
+                    InferirTiposYValores(h);
+                }
+
+                var (tipoRet, valRet) = EjecutarFuncion(nodo.Lexema, nodo.Hijos);
+                nodo.TipoDato = tipoRet;
+                nodo.ValorCalculado = valRet;
+
+                RegistrarRetornoFuncion(nodo.Lexema, tipoRet, valRet);
+                RegistrarVariable(nodo.Lexema, tipoRet, valRet);
+                return;
+            }
+
             // Verificación semántica de variables cuando se leen como operando
             if (nodo.TipoNodo == "Identificador")
             {
@@ -802,6 +1070,11 @@ namespace Interfaz_Lexico
                     nodo.TipoDato = "desconocido";
                     nodo.MensajeError = $"Error Semántico [Inicialización]: La variable '{nombre}' se utiliza sin haber sido inicializada o contiene un error previo.";
                     ReportarError(nodo.MensajeError, lineaActual);
+                }
+                else
+                {
+                    nodo.TipoDato = tipo;
+                    nodo.ValorCalculado = val;
                 }
                 return;
             }
@@ -934,7 +1207,17 @@ namespace Interfaz_Lexico
                 bool esBoolIzq = bool.TryParse(valIzqStr, out bool bIzq);
                 bool esBoolDer = bool.TryParse(valDerStr, out bool bDer);
 
-                if (esBoolIzq && esBoolDer)
+                if (nodo.TipoDato == "string" && nodo.Lexema == "+")
+                {
+                    try
+                    {
+                        string sIzq = LimpiarValorCadena(valIzqStr);
+                        string sDer = LimpiarValorCadena(valDerStr);
+                        nodo.ValorCalculado = $"\"{sIzq}{sDer}\"";
+                    }
+                    catch { }
+                }
+                else if (esBoolIzq && esBoolDer)
                 {
                     try
                     {
@@ -1028,6 +1311,26 @@ namespace Interfaz_Lexico
             }
         }
 
+        // Limpia comillas envolventes o signos sobrantes de valores para concatenación de cadenas
+        private string LimpiarValorCadena(string? val)
+        {
+            if (string.IsNullOrEmpty(val) || val == "Null") return "";
+            string s = val.Trim();
+            if (s.StartsWith("\"") && s.EndsWith("\"") && s.Length >= 2)
+            {
+                return s.Substring(1, s.Length - 2);
+            }
+            if (s.StartsWith("'") && s.EndsWith("'") && s.Length >= 2)
+            {
+                return s.Substring(1, s.Length - 2);
+            }
+            if (s.StartsWith("+") && double.TryParse(s.Substring(1), NumberStyles.Any, CultureInfo.InvariantCulture, out _))
+            {
+                return s.Substring(1);
+            }
+            return s;
+        }
+
         // Recorre el árbol en post-orden generando los pasos secuenciales de resolución GenerarPasosJerarquia()
         private void GenerarPasosJerarquia(NodoJerarquia nodo)
         {
@@ -1036,6 +1339,7 @@ namespace Interfaz_Lexico
             // Recorrido en post-orden: primero los subárboles de mayor prioridad (dentro de paréntesis o ramas inferiores)
             if (nodo.Izquierdo != null) GenerarPasosJerarquia(nodo.Izquierdo);
             if (nodo.Derecho != null) GenerarPasosJerarquia(nodo.Derecho);
+            foreach (var h in nodo.Hijos) GenerarPasosJerarquia(h);
 
             if (nodo.TipoNodo == "Agrupacion")
             {
@@ -1063,6 +1367,12 @@ namespace Interfaz_Lexico
                 string dest = nodo.Izquierdo?.Lexema ?? "variable";
                 string val = nodo.Derecho?.ValorCalculado ?? "expresión";
                 pasos.Add($"Paso {pasoContador++} [NIVEL 7 - ASIGNACIÓN]: Guardar resultado '{val}' en variable destino '{dest}'");
+            }
+            else if (nodo.TipoNodo == "Funcion")
+            {
+                string argsStr = string.Join(", ", nodo.Hijos.Select(h => h.ValorCalculado ?? h.Lexema));
+                string resStr = !string.IsNullOrEmpty(nodo.ValorCalculado) ? $" = {nodo.ValorCalculado}" : "";
+                pasos.Add($"Paso {pasoContador++} [LLAMADA A FUNCIÓN]: Invocar {nodo.Lexema}({argsStr}){resStr} (Tipo: {nodo.TipoDato})");
             }
         }
 
@@ -1112,6 +1422,8 @@ namespace Interfaz_Lexico
             if (string.IsNullOrWhiteSpace(codigoFuente)) return lista;
 
             string[] lineas = codigoFuente.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+            bool dentroDeFuncion = false;
+            DefinicionFuncion? defActual = null;
 
             for (int i = 0; i < lineas.Length; i++)
             {
@@ -1121,9 +1433,67 @@ namespace Interfaz_Lexico
                 // Ignorar comentarios
                 if (lineaTexto.StartsWith("//") || lineaTexto.StartsWith("/*")) continue;
 
-                // Eliminar comillas y punto y coma inicial/final si existe para facilitar parseo
-                string lineaSinPuntoComa = lineaTexto.Trim().Trim('"').Trim(';').Trim();
+                // Eliminar comillas envolventes de la línea completa si existen, y punto y coma final
+                string lineaLimpia = lineaTexto.Trim();
+                if (lineaLimpia.StartsWith("\"") && lineaLimpia.EndsWith("\"") && lineaLimpia.Length >= 2)
+                {
+                    lineaLimpia = lineaLimpia.Substring(1, lineaLimpia.Length - 2).Trim();
+                }
+                string lineaSinPuntoComa = lineaLimpia.TrimEnd(';').Trim();
                 if (string.IsNullOrEmpty(lineaSinPuntoComa)) continue;
+
+                // Detección de inicio de función: EXECUTE SUMA(X, Y), FUNCTION SALUDAR(NOM), DEF ...
+                var matchFunc = System.Text.RegularExpressions.Regex.Match(lineaSinPuntoComa, @"^\s*(EXECUTE|FUNCTION|DEF)\s+([A-Za-z0-9_]+)\s*(?:\(([^)]*)\))?", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                if (matchFunc.Success)
+                {
+                    dentroDeFuncion = true;
+                    string nombreFunc = matchFunc.Groups[2].Value;
+                    string rawParams = matchFunc.Groups[3].Value;
+                    List<string> parms = new List<string>();
+                    if (!string.IsNullOrWhiteSpace(rawParams))
+                    {
+                        parms = rawParams.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                                         .Select(p => p.Trim().Split(' ').Last())
+                                         .Where(p => !string.IsNullOrEmpty(p))
+                                         .ToList();
+                    }
+                    defActual = new DefinicionFuncion
+                    {
+                        Nombre = nombreFunc,
+                        Parametros = parms
+                    };
+                    continue;
+                }
+
+                if (dentroDeFuncion)
+                {
+                    if (System.Text.RegularExpressions.Regex.IsMatch(lineaSinPuntoComa, @"^\s*(ENDEXECUTE|ENDFUNCTION|ENDDEF|ENDDO)\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+                    {
+                        dentroDeFuncion = false;
+                        if (defActual != null)
+                        {
+                            RegistrarDefinicionFuncion(defActual);
+                            defActual = null;
+                        }
+                        continue;
+                    }
+
+                    if (System.Text.RegularExpressions.Regex.IsMatch(lineaSinPuntoComa, @"^\s*RETURN\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+                    {
+                        string exprRet = System.Text.RegularExpressions.Regex.Replace(lineaSinPuntoComa, @"^\s*RETURN\b", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase).Trim();
+                        if (defActual != null)
+                        {
+                            defActual.ExpresionRetorno = exprRet;
+                        }
+                        continue;
+                    }
+
+                    if (defActual != null && !string.IsNullOrWhiteSpace(lineaSinPuntoComa))
+                    {
+                        defActual.Instrucciones.Add(lineaSinPuntoComa);
+                    }
+                    continue;
+                }
 
                 // 1. Asignación: ID = Expresion (asegurar que no sea IF, WHILE, FOR, etc.)
                 bool esEstructuraControl = System.Text.RegularExpressions.Regex.IsMatch(lineaSinPuntoComa, @"^\s*\b(IF|WHILE|FOR|PRINT|READ)\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
@@ -1232,12 +1602,25 @@ namespace Interfaz_Lexico
                     continue;
                 }
 
+                // 4d. RETURN Expresion (en funciones)
+                if (System.Text.RegularExpressions.Regex.IsMatch(lineaSinPuntoComa, @"^\s*RETURN\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+                {
+                    string exprRet = System.Text.RegularExpressions.Regex.Replace(lineaSinPuntoComa, @"^\s*RETURN\b", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase).Trim();
+                    if (!string.IsNullOrEmpty(exprRet))
+                    {
+                        var resRet = AnalizarExpresion(exprRet, i + 1);
+                        lista.Add(resRet);
+                    }
+                    continue;
+                }
+
                 // 5. Palabras reservadas que no son operaciones
                 string primeraPalabra = lineaSinPuntoComa.Split(' ')[0].ToUpper();
                 if (primeraPalabra == "START" || primeraPalabra == "END" || primeraPalabra == "ELSE" ||
                     primeraPalabra == "ENDIF" || primeraPalabra == "ENDWHILE" ||
                     primeraPalabra == "ENDFOR" || primeraPalabra == "READ" || primeraPalabra == "DO" ||
                     primeraPalabra == "ENDDO" || primeraPalabra == "EXECUTE" || primeraPalabra == "ENDEXECUTE" ||
+                    primeraPalabra == "FUNCTION" || primeraPalabra == "ENDFUNCTION" || primeraPalabra == "DEF" || primeraPalabra == "ENDDEF" ||
                     primeraPalabra == "DEL" || primeraPalabra == "PERHAPS" || primeraPalabra == "CASE" ||
                     primeraPalabra == "NONE" || primeraPalabra == "ENDCASE" || primeraPalabra == "FOR" ||
                     primeraPalabra == "FROM" || primeraPalabra == "SET" || primeraPalabra == "UNTIL" ||

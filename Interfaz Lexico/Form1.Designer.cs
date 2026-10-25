@@ -25,6 +25,7 @@ namespace Interfaz_Lexico
         {
             DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
             DataGridViewCellStyle dataGridViewCellStyle2 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle3 = new DataGridViewCellStyle();
             richArchivoDeTokens = new RichTextBox();
             richProgramaFuente = new RichTextBox();
             dgtTablaDeSimbolos = new DataGridView();
@@ -56,15 +57,34 @@ namespace Interfaz_Lexico
             lblOperacionesCodigo = new Label();
             cboOperacionesCodigo = new ComboBox();
             lblEstadoSemantico = new Label();
+            tabAnalisisJerarquia = new TabControl();
+            tabArbol = new TabPage();
+            tabCodigoIntermedio = new TabPage();
             tvArbolJerarquia = new TreeView();
             lblPasosJerarquia = new Label();
             rtbPasosJerarquia = new RichTextBox();
+            lblPostfija = new Label();
+            txtPostfija = new TextBox();
+            lblCuadruplos = new Label();
+            rbCuadruploOpActual = new RadioButton();
+            rbCuadruploTodos = new RadioButton();
+            dgtCuadruplos = new DataGridView();
+            colNum = new DataGridViewTextBoxColumn();
+            colOp = new DataGridViewTextBoxColumn();
+            colArg1 = new DataGridViewTextBoxColumn();
+            colArg2 = new DataGridViewTextBoxColumn();
+            colRes = new DataGridViewTextBoxColumn();
+            lblResumenCuadruplos = new Label();
             ((System.ComponentModel.ISupportInitialize)dgtTablaDeSimbolos).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dgtErrores).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)dgtCuadruplos).BeginInit();
             ((System.ComponentModel.ISupportInitialize)PicNovaNyx).BeginInit();
             ((System.ComponentModel.ISupportInitialize)picLineas).BeginInit();
             ((System.ComponentModel.ISupportInitialize)picLinea2).BeginInit();
             grpArbolJerarquia.SuspendLayout();
+            tabAnalisisJerarquia.SuspendLayout();
+            tabArbol.SuspendLayout();
+            tabCodigoIntermedio.SuspendLayout();
             SuspendLayout();
             // 
             // richArchivoDeTokens
@@ -325,9 +345,7 @@ namespace Interfaz_Lexico
             grpArbolJerarquia.Controls.Add(lblOperacionesCodigo);
             grpArbolJerarquia.Controls.Add(cboOperacionesCodigo);
             grpArbolJerarquia.Controls.Add(lblEstadoSemantico);
-            grpArbolJerarquia.Controls.Add(tvArbolJerarquia);
-            grpArbolJerarquia.Controls.Add(lblPasosJerarquia);
-            grpArbolJerarquia.Controls.Add(rtbPasosJerarquia);
+            grpArbolJerarquia.Controls.Add(tabAnalisisJerarquia);
             grpArbolJerarquia.Font = new Font("Arial", 10.2F, FontStyle.Bold, GraphicsUnit.Point, 0);
             grpArbolJerarquia.ForeColor = Color.DarkSlateBlue;
             grpArbolJerarquia.Location = new Point(1400, 26);
@@ -335,7 +353,7 @@ namespace Interfaz_Lexico
             grpArbolJerarquia.Size = new Size(435, 708);
             grpArbolJerarquia.TabIndex = 23;
             grpArbolJerarquia.TabStop = false;
-            grpArbolJerarquia.Text = "Árbol de Jerarquía (Sincronizado)";
+            grpArbolJerarquia.Text = "Árbol y Código Intermedio";
             // 
             // lblOperacionesCodigo
             // 
@@ -370,13 +388,37 @@ namespace Interfaz_Lexico
             lblEstadoSemantico.TabIndex = 2;
             lblEstadoSemantico.Text = "Estado: Presiona 'Analizar Todo'";
             // 
+            // tabAnalisisJerarquia
+            // 
+            tabAnalisisJerarquia.Controls.Add(tabArbol);
+            tabAnalisisJerarquia.Controls.Add(tabCodigoIntermedio);
+            tabAnalisisJerarquia.Font = new Font("Arial", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            tabAnalisisJerarquia.Location = new Point(15, 106);
+            tabAnalisisJerarquia.Name = "tabAnalisisJerarquia";
+            tabAnalisisJerarquia.SelectedIndex = 0;
+            tabAnalisisJerarquia.Size = new Size(405, 592);
+            tabAnalisisJerarquia.TabIndex = 3;
+            // 
+            // tabArbol
+            // 
+            tabArbol.BackColor = Color.White;
+            tabArbol.Controls.Add(tvArbolJerarquia);
+            tabArbol.Controls.Add(lblPasosJerarquia);
+            tabArbol.Controls.Add(rtbPasosJerarquia);
+            tabArbol.Location = new Point(4, 27);
+            tabArbol.Name = "tabArbol";
+            tabArbol.Padding = new Padding(3);
+            tabArbol.Size = new Size(397, 561);
+            tabArbol.TabIndex = 0;
+            tabArbol.Text = "🌳 Árbol y Pasos";
+            // 
             // tvArbolJerarquia
             // 
             tvArbolJerarquia.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            tvArbolJerarquia.Location = new Point(15, 106);
+            tvArbolJerarquia.Location = new Point(6, 6);
             tvArbolJerarquia.Name = "tvArbolJerarquia";
-            tvArbolJerarquia.Size = new Size(405, 415);
-            tvArbolJerarquia.TabIndex = 3;
+            tvArbolJerarquia.Size = new Size(385, 360);
+            tvArbolJerarquia.TabIndex = 0;
             tvArbolJerarquia.AfterSelect += tvArbolJerarquia_AfterSelect;
             // 
             // lblPasosJerarquia
@@ -384,10 +426,10 @@ namespace Interfaz_Lexico
             lblPasosJerarquia.AutoSize = true;
             lblPasosJerarquia.Font = new Font("Arial", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
             lblPasosJerarquia.ForeColor = Color.Black;
-            lblPasosJerarquia.Location = new Point(15, 528);
+            lblPasosJerarquia.Location = new Point(6, 372);
             lblPasosJerarquia.Name = "lblPasosJerarquia";
             lblPasosJerarquia.Size = new Size(260, 18);
-            lblPasosJerarquia.TabIndex = 4;
+            lblPasosJerarquia.TabIndex = 1;
             lblPasosJerarquia.Text = "Pasos de Resolución por Jerarquía:";
             // 
             // rtbPasosJerarquia
@@ -395,12 +437,159 @@ namespace Interfaz_Lexico
             rtbPasosJerarquia.BackColor = Color.White;
             rtbPasosJerarquia.Font = new Font("Consolas", 8.5F, FontStyle.Regular, GraphicsUnit.Point, 0);
             rtbPasosJerarquia.ForeColor = Color.FromArgb(30, 30, 30);
-            rtbPasosJerarquia.Location = new Point(15, 550);
+            rtbPasosJerarquia.Location = new Point(6, 394);
             rtbPasosJerarquia.Name = "rtbPasosJerarquia";
             rtbPasosJerarquia.ReadOnly = true;
-            rtbPasosJerarquia.Size = new Size(405, 146);
-            rtbPasosJerarquia.TabIndex = 5;
+            rtbPasosJerarquia.Size = new Size(385, 158);
+            rtbPasosJerarquia.TabIndex = 2;
             rtbPasosJerarquia.Text = "";
+            // 
+            // tabCodigoIntermedio
+            // 
+            tabCodigoIntermedio.BackColor = Color.White;
+            tabCodigoIntermedio.Controls.Add(lblPostfija);
+            tabCodigoIntermedio.Controls.Add(txtPostfija);
+            tabCodigoIntermedio.Controls.Add(lblCuadruplos);
+            tabCodigoIntermedio.Controls.Add(rbCuadruploOpActual);
+            tabCodigoIntermedio.Controls.Add(rbCuadruploTodos);
+            tabCodigoIntermedio.Controls.Add(dgtCuadruplos);
+            tabCodigoIntermedio.Controls.Add(lblResumenCuadruplos);
+            tabCodigoIntermedio.Location = new Point(4, 27);
+            tabCodigoIntermedio.Name = "tabCodigoIntermedio";
+            tabCodigoIntermedio.Padding = new Padding(3);
+            tabCodigoIntermedio.Size = new Size(397, 561);
+            tabCodigoIntermedio.TabIndex = 1;
+            tabCodigoIntermedio.Text = "⚡ Código Intermedio";
+            // 
+            // lblPostfija
+            // 
+            lblPostfija.AutoSize = true;
+            lblPostfija.Font = new Font("Arial", 8.8F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            lblPostfija.ForeColor = Color.DarkSlateBlue;
+            lblPostfija.Location = new Point(6, 8);
+            lblPostfija.Name = "lblPostfija";
+            lblPostfija.Size = new Size(280, 18);
+            lblPostfija.TabIndex = 0;
+            lblPostfija.Text = "Notación Postfija (Polaca Inversa - RPN):";
+            // 
+            // txtPostfija
+            // 
+            txtPostfija.BackColor = Color.FromArgb(245, 248, 255);
+            txtPostfija.Font = new Font("Consolas", 10.5F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            txtPostfija.ForeColor = Color.DarkBlue;
+            txtPostfija.Location = new Point(6, 29);
+            txtPostfija.Name = "txtPostfija";
+            txtPostfija.ReadOnly = true;
+            txtPostfija.Size = new Size(385, 28);
+            txtPostfija.TabIndex = 1;
+            // 
+            // lblCuadruplos
+            // 
+            lblCuadruplos.AutoSize = true;
+            lblCuadruplos.Font = new Font("Arial", 8.8F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            lblCuadruplos.ForeColor = Color.DarkSlateBlue;
+            lblCuadruplos.Location = new Point(6, 64);
+            lblCuadruplos.Name = "lblCuadruplos";
+            lblCuadruplos.Size = new Size(245, 18);
+            lblCuadruplos.TabIndex = 2;
+            lblCuadruplos.Text = "Cuádruplos de 3 Direcciones (C3D):";
+            // 
+            // rbCuadruploOpActual
+            // 
+            rbCuadruploOpActual.AutoSize = true;
+            rbCuadruploOpActual.Checked = true;
+            rbCuadruploOpActual.Font = new Font("Arial", 8F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            rbCuadruploOpActual.ForeColor = Color.FromArgb(40, 40, 40);
+            rbCuadruploOpActual.Location = new Point(6, 86);
+            rbCuadruploOpActual.Name = "rbCuadruploOpActual";
+            rbCuadruploOpActual.Size = new Size(130, 20);
+            rbCuadruploOpActual.TabIndex = 3;
+            rbCuadruploOpActual.TabStop = true;
+            rbCuadruploOpActual.Text = "Op. Seleccionada";
+            rbCuadruploOpActual.UseVisualStyleBackColor = true;
+            rbCuadruploOpActual.CheckedChanged += rbCuadruploModo_CheckedChanged;
+            // 
+            // rbCuadruploTodos
+            // 
+            rbCuadruploTodos.AutoSize = true;
+            rbCuadruploTodos.Font = new Font("Arial", 8F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            rbCuadruploTodos.ForeColor = Color.FromArgb(40, 40, 40);
+            rbCuadruploTodos.Location = new Point(148, 86);
+            rbCuadruploTodos.Name = "rbCuadruploTodos";
+            rbCuadruploTodos.Size = new Size(150, 20);
+            rbCuadruploTodos.TabIndex = 4;
+            rbCuadruploTodos.Text = "Programa Completo";
+            rbCuadruploTodos.UseVisualStyleBackColor = true;
+            rbCuadruploTodos.CheckedChanged += rbCuadruploModo_CheckedChanged;
+            // 
+            // dgtCuadruplos
+            // 
+            dataGridViewCellStyle3.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            dgtCuadruplos.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle3;
+            dgtCuadruplos.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgtCuadruplos.Columns.AddRange(new DataGridViewColumn[] { colNum, colOp, colArg1, colArg2, colRes });
+            dgtCuadruplos.Location = new Point(6, 110);
+            dgtCuadruplos.Name = "dgtCuadruplos";
+            dgtCuadruplos.RowHeadersVisible = false;
+            dgtCuadruplos.RowHeadersWidth = 51;
+            dgtCuadruplos.Size = new Size(385, 412);
+            dgtCuadruplos.TabIndex = 5;
+            // 
+            // colNum
+            // 
+            colNum.FillWeight = 28F;
+            colNum.HeaderText = "#";
+            colNum.MinimumWidth = 6;
+            colNum.Name = "colNum";
+            colNum.ReadOnly = true;
+            colNum.Width = 35;
+            // 
+            // colOp
+            // 
+            colOp.FillWeight = 42F;
+            colOp.HeaderText = "Operador";
+            colOp.MinimumWidth = 6;
+            colOp.Name = "colOp";
+            colOp.ReadOnly = true;
+            colOp.Width = 60;
+            // 
+            // colArg1
+            // 
+            colArg1.FillWeight = 50F;
+            colArg1.HeaderText = "Arg 1";
+            colArg1.MinimumWidth = 6;
+            colArg1.Name = "colArg1";
+            colArg1.ReadOnly = true;
+            colArg1.Width = 70;
+            // 
+            // colArg2
+            // 
+            colArg2.FillWeight = 50F;
+            colArg2.HeaderText = "Arg 2";
+            colArg2.MinimumWidth = 6;
+            colArg2.Name = "colArg2";
+            colArg2.ReadOnly = true;
+            colArg2.Width = 70;
+            // 
+            // colRes
+            // 
+            colRes.FillWeight = 52F;
+            colRes.HeaderText = "Resultado";
+            colRes.MinimumWidth = 6;
+            colRes.Name = "colRes";
+            colRes.ReadOnly = true;
+            colRes.Width = 75;
+            // 
+            // lblResumenCuadruplos
+            // 
+            lblResumenCuadruplos.AutoSize = true;
+            lblResumenCuadruplos.Font = new Font("Segoe UI", 8.5F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lblResumenCuadruplos.ForeColor = Color.DimGray;
+            lblResumenCuadruplos.Location = new Point(6, 528);
+            lblResumenCuadruplos.Name = "lblResumenCuadruplos";
+            lblResumenCuadruplos.Size = new Size(245, 19);
+            lblResumenCuadruplos.TabIndex = 6;
+            lblResumenCuadruplos.Text = "Temporales: 0 | Cuádruplos: 0";
             // 
             // Form1
             // 
@@ -433,9 +622,15 @@ namespace Interfaz_Lexico
             Load += Form1_Load;
             ((System.ComponentModel.ISupportInitialize)dgtTablaDeSimbolos).EndInit();
             ((System.ComponentModel.ISupportInitialize)dgtErrores).EndInit();
+            ((System.ComponentModel.ISupportInitialize)dgtCuadruplos).EndInit();
             ((System.ComponentModel.ISupportInitialize)PicNovaNyx).EndInit();
             ((System.ComponentModel.ISupportInitialize)picLineas).EndInit();
             ((System.ComponentModel.ISupportInitialize)picLinea2).EndInit();
+            tabArbol.ResumeLayout(false);
+            tabArbol.PerformLayout();
+            tabCodigoIntermedio.ResumeLayout(false);
+            tabCodigoIntermedio.PerformLayout();
+            tabAnalisisJerarquia.ResumeLayout(false);
             grpArbolJerarquia.ResumeLayout(false);
             grpArbolJerarquia.PerformLayout();
             ResumeLayout(false);
@@ -476,8 +671,23 @@ namespace Interfaz_Lexico
         private System.Windows.Forms.Label lblOperacionesCodigo;
         private System.Windows.Forms.ComboBox cboOperacionesCodigo;
         private System.Windows.Forms.Label lblEstadoSemantico;
+        private System.Windows.Forms.TabControl tabAnalisisJerarquia;
+        private System.Windows.Forms.TabPage tabArbol;
+        private System.Windows.Forms.TabPage tabCodigoIntermedio;
         private System.Windows.Forms.TreeView tvArbolJerarquia;
         private System.Windows.Forms.Label lblPasosJerarquia;
         private System.Windows.Forms.RichTextBox rtbPasosJerarquia;
+        private System.Windows.Forms.Label lblPostfija;
+        private System.Windows.Forms.TextBox txtPostfija;
+        private System.Windows.Forms.Label lblCuadruplos;
+        private System.Windows.Forms.RadioButton rbCuadruploOpActual;
+        private System.Windows.Forms.RadioButton rbCuadruploTodos;
+        private System.Windows.Forms.DataGridView dgtCuadruplos;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colNum;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colOp;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colArg1;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colArg2;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colRes;
+        private System.Windows.Forms.Label lblResumenCuadruplos;
     }
 }

@@ -1,0 +1,7 @@
+"START"
+""
+"FOR I = FROM 1 UNTIL 10 INTERVAL 2"
+"  PRINT I ;"
+"ENDFOR ;"
+""
+"END"
