@@ -533,7 +533,7 @@ namespace Interfaz_Lexico
         // Guarda el código escrito en el editor de texto en un archivo en disco btnGuardarPrograma_Click()
         private void btnGuardarPrograma_Click(object sender, EventArgs e)
         {
-            
+
             FileDialog panel = new SaveFileDialog();
             panel.Filter = "Archivos de texto (*.txt)|*.txt|Todos los archivos (*.*)|*.*";
             panel.Title = "Guardar archivo de código fuente";
@@ -572,7 +572,7 @@ namespace Interfaz_Lexico
             Panel.Filter = "Archivos de texto (*.txt)|*.txt|Todos los archivos (*.*)|*.*";
             Panel.Title = "Seleccionar archivo de código fuente";
             Panel.InitialDirectory = Path.GetFullPath("..\\..\\..\\..\\ArchivosTexto");
-            if(Panel.ShowDialog() == DialogResult.OK)
+            if (Panel.ShowDialog() == DialogResult.OK)
             {
                 NombreArchivo = Panel.FileName;
             }
@@ -995,5 +995,7 @@ namespace Interfaz_Lexico
         {
             ActualizarGridCuadruplos();
         }
+
+
     }
 }

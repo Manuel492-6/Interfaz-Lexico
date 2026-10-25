@@ -59,10 +59,10 @@ namespace Interfaz_Lexico
             lblEstadoSemantico = new Label();
             tabAnalisisJerarquia = new TabControl();
             tabArbol = new TabPage();
-            tabCodigoIntermedio = new TabPage();
             tvArbolJerarquia = new TreeView();
             lblPasosJerarquia = new Label();
             rtbPasosJerarquia = new RichTextBox();
+            tabCodigoIntermedio = new TabPage();
             lblPostfija = new Label();
             txtPostfija = new TextBox();
             lblCuadruplos = new Label();
@@ -75,9 +75,11 @@ namespace Interfaz_Lexico
             colArg2 = new DataGridViewTextBoxColumn();
             colRes = new DataGridViewTextBoxColumn();
             lblResumenCuadruplos = new Label();
+            tabControl1 = new TabControl();
+            tabPage1 = new TabPage();
+            tabPage2 = new TabPage();
             ((System.ComponentModel.ISupportInitialize)dgtTablaDeSimbolos).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dgtErrores).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)dgtCuadruplos).BeginInit();
             ((System.ComponentModel.ISupportInitialize)PicNovaNyx).BeginInit();
             ((System.ComponentModel.ISupportInitialize)picLineas).BeginInit();
             ((System.ComponentModel.ISupportInitialize)picLinea2).BeginInit();
@@ -85,11 +87,15 @@ namespace Interfaz_Lexico
             tabAnalisisJerarquia.SuspendLayout();
             tabArbol.SuspendLayout();
             tabCodigoIntermedio.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dgtCuadruplos).BeginInit();
+            tabControl1.SuspendLayout();
+            tabPage1.SuspendLayout();
+            tabPage2.SuspendLayout();
             SuspendLayout();
             // 
             // richArchivoDeTokens
             // 
-            richArchivoDeTokens.Location = new Point(956, 67);
+            richArchivoDeTokens.Location = new Point(812, 72);
             richArchivoDeTokens.Name = "richArchivoDeTokens";
             richArchivoDeTokens.Size = new Size(420, 337);
             richArchivoDeTokens.TabIndex = 4;
@@ -113,11 +119,11 @@ namespace Interfaz_Lexico
             dgtTablaDeSimbolos.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgtTablaDeSimbolos.Columns.AddRange(new DataGridViewColumn[] { Identificador, Nombre, TipoDato, Valor, Direccion, Bytes, Ambito });
             dgtTablaDeSimbolos.GridColor = SystemColors.InactiveCaptionText;
-            dgtTablaDeSimbolos.Location = new Point(12, 546);
+            dgtTablaDeSimbolos.Location = new Point(18, 52);
             dgtTablaDeSimbolos.Name = "dgtTablaDeSimbolos";
             dgtTablaDeSimbolos.RowHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
             dgtTablaDeSimbolos.RowHeadersWidth = 51;
-            dgtTablaDeSimbolos.Size = new Size(620, 188);
+            dgtTablaDeSimbolos.Size = new Size(794, 210);
             dgtTablaDeSimbolos.TabIndex = 7;
             // 
             // Identificador
@@ -182,10 +188,10 @@ namespace Interfaz_Lexico
             dgtErrores.AlternatingRowsDefaultCellStyle = dataGridViewCellStyle2;
             dgtErrores.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgtErrores.Columns.AddRange(new DataGridViewColumn[] { Linea, Error });
-            dgtErrores.Location = new Point(660, 546);
+            dgtErrores.Location = new Point(16, 52);
             dgtErrores.Name = "dgtErrores";
             dgtErrores.RowHeadersWidth = 51;
-            dgtErrores.Size = new Size(716, 188);
+            dgtErrores.Size = new Size(796, 210);
             dgtErrores.TabIndex = 8;
             // 
             // Linea
@@ -236,7 +242,7 @@ namespace Interfaz_Lexico
             // 
             // btnGuardarArchivo
             // 
-            btnGuardarArchivo.Location = new Point(959, 432);
+            btnGuardarArchivo.Location = new Point(802, 432);
             btnGuardarArchivo.Name = "btnGuardarArchivo";
             btnGuardarArchivo.Size = new Size(136, 48);
             btnGuardarArchivo.TabIndex = 12;
@@ -259,7 +265,7 @@ namespace Interfaz_Lexico
             lblNovaNyx.AutoSize = true;
             lblNovaNyx.Font = new Font("Stencil", 25.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
             lblNovaNyx.ForeColor = SystemColors.ActiveCaptionText;
-            lblNovaNyx.Location = new Point(616, 9);
+            lblNovaNyx.Location = new Point(569, 2);
             lblNovaNyx.Name = "lblNovaNyx";
             lblNovaNyx.Size = new Size(212, 51);
             lblNovaNyx.TabIndex = 13;
@@ -268,7 +274,7 @@ namespace Interfaz_Lexico
             // PicNovaNyx
             // 
             PicNovaNyx.Image = Properties.Resources.WhatsApp_Image_2026_04_19_at_10_51_10_AM;
-            PicNovaNyx.Location = new Point(616, 67);
+            PicNovaNyx.Location = new Point(569, 67);
             PicNovaNyx.Name = "PicNovaNyx";
             PicNovaNyx.Size = new Size(214, 158);
             PicNovaNyx.SizeMode = PictureBoxSizeMode.StretchImage;
@@ -278,7 +284,7 @@ namespace Interfaz_Lexico
             // lblNovaNyxVersion
             // 
             lblNovaNyxVersion.AutoSize = true;
-            lblNovaNyxVersion.Location = new Point(1112, 735);
+            lblNovaNyxVersion.Location = new Point(635, 246);
             lblNovaNyxVersion.Name = "lblNovaNyxVersion";
             lblNovaNyxVersion.Size = new Size(91, 20);
             lblNovaNyxVersion.TabIndex = 15;
@@ -298,7 +304,7 @@ namespace Interfaz_Lexico
             // 
             label2.AutoSize = true;
             label2.Font = new Font("Arial", 13.8F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label2.Location = new Point(956, 26);
+            label2.Location = new Point(869, 26);
             label2.Name = "label2";
             label2.Size = new Size(223, 27);
             label2.TabIndex = 17;
@@ -308,7 +314,7 @@ namespace Interfaz_Lexico
             // 
             label3.AutoSize = true;
             label3.Font = new Font("Arial", 13.8F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label3.Location = new Point(660, 502);
+            label3.Location = new Point(16, 16);
             label3.Name = "label3";
             label3.Size = new Size(94, 27);
             label3.TabIndex = 18;
@@ -318,7 +324,7 @@ namespace Interfaz_Lexico
             // 
             label4.AutoSize = true;
             label4.Font = new Font("Arial", 13.8F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label4.Location = new Point(26, 502);
+            label4.Location = new Point(18, 16);
             label4.Name = "label4";
             label4.Size = new Size(217, 27);
             label4.TabIndex = 19;
@@ -334,9 +340,9 @@ namespace Interfaz_Lexico
             // 
             // picLinea2
             // 
-            picLinea2.Location = new Point(876, 67);
+            picLinea2.Location = new Point(785, 67);
             picLinea2.Name = "picLinea2";
-            picLinea2.Size = new Size(74, 337);
+            picLinea2.Size = new Size(21, 337);
             picLinea2.TabIndex = 21;
             picLinea2.TabStop = false;
             // 
@@ -348,9 +354,9 @@ namespace Interfaz_Lexico
             grpArbolJerarquia.Controls.Add(tabAnalisisJerarquia);
             grpArbolJerarquia.Font = new Font("Arial", 10.2F, FontStyle.Bold, GraphicsUnit.Point, 0);
             grpArbolJerarquia.ForeColor = Color.DarkSlateBlue;
-            grpArbolJerarquia.Location = new Point(1400, 26);
+            grpArbolJerarquia.Location = new Point(1238, 26);
             grpArbolJerarquia.Name = "grpArbolJerarquia";
-            grpArbolJerarquia.Size = new Size(435, 708);
+            grpArbolJerarquia.Size = new Size(476, 757);
             grpArbolJerarquia.TabIndex = 23;
             grpArbolJerarquia.TabStop = false;
             grpArbolJerarquia.Text = "Árbol y Código Intermedio";
@@ -396,7 +402,7 @@ namespace Interfaz_Lexico
             tabAnalisisJerarquia.Location = new Point(15, 106);
             tabAnalisisJerarquia.Name = "tabAnalisisJerarquia";
             tabAnalisisJerarquia.SelectedIndex = 0;
-            tabAnalisisJerarquia.Size = new Size(405, 592);
+            tabAnalisisJerarquia.Size = new Size(455, 645);
             tabAnalisisJerarquia.TabIndex = 3;
             // 
             // tabArbol
@@ -408,7 +414,7 @@ namespace Interfaz_Lexico
             tabArbol.Location = new Point(4, 27);
             tabArbol.Name = "tabArbol";
             tabArbol.Padding = new Padding(3);
-            tabArbol.Size = new Size(397, 561);
+            tabArbol.Size = new Size(447, 614);
             tabArbol.TabIndex = 0;
             tabArbol.Text = "🌳 Árbol y Pasos";
             // 
@@ -417,7 +423,7 @@ namespace Interfaz_Lexico
             tvArbolJerarquia.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
             tvArbolJerarquia.Location = new Point(6, 6);
             tvArbolJerarquia.Name = "tvArbolJerarquia";
-            tvArbolJerarquia.Size = new Size(385, 360);
+            tvArbolJerarquia.Size = new Size(425, 360);
             tvArbolJerarquia.TabIndex = 0;
             tvArbolJerarquia.AfterSelect += tvArbolJerarquia_AfterSelect;
             // 
@@ -440,7 +446,7 @@ namespace Interfaz_Lexico
             rtbPasosJerarquia.Location = new Point(6, 394);
             rtbPasosJerarquia.Name = "rtbPasosJerarquia";
             rtbPasosJerarquia.ReadOnly = true;
-            rtbPasosJerarquia.Size = new Size(385, 158);
+            rtbPasosJerarquia.Size = new Size(425, 214);
             rtbPasosJerarquia.TabIndex = 2;
             rtbPasosJerarquia.Text = "";
             // 
@@ -468,7 +474,7 @@ namespace Interfaz_Lexico
             lblPostfija.ForeColor = Color.DarkSlateBlue;
             lblPostfija.Location = new Point(6, 8);
             lblPostfija.Name = "lblPostfija";
-            lblPostfija.Size = new Size(280, 18);
+            lblPostfija.Size = new Size(295, 18);
             lblPostfija.TabIndex = 0;
             lblPostfija.Text = "Notación Postfija (Polaca Inversa - RPN):";
             // 
@@ -490,7 +496,7 @@ namespace Interfaz_Lexico
             lblCuadruplos.ForeColor = Color.DarkSlateBlue;
             lblCuadruplos.Location = new Point(6, 64);
             lblCuadruplos.Name = "lblCuadruplos";
-            lblCuadruplos.Size = new Size(245, 18);
+            lblCuadruplos.Size = new Size(261, 18);
             lblCuadruplos.TabIndex = 2;
             lblCuadruplos.Text = "Cuádruplos de 3 Direcciones (C3D):";
             // 
@@ -502,7 +508,7 @@ namespace Interfaz_Lexico
             rbCuadruploOpActual.ForeColor = Color.FromArgb(40, 40, 40);
             rbCuadruploOpActual.Location = new Point(6, 86);
             rbCuadruploOpActual.Name = "rbCuadruploOpActual";
-            rbCuadruploOpActual.Size = new Size(130, 20);
+            rbCuadruploOpActual.Size = new Size(150, 20);
             rbCuadruploOpActual.TabIndex = 3;
             rbCuadruploOpActual.TabStop = true;
             rbCuadruploOpActual.Text = "Op. Seleccionada";
@@ -516,7 +522,7 @@ namespace Interfaz_Lexico
             rbCuadruploTodos.ForeColor = Color.FromArgb(40, 40, 40);
             rbCuadruploTodos.Location = new Point(148, 86);
             rbCuadruploTodos.Name = "rbCuadruploTodos";
-            rbCuadruploTodos.Size = new Size(150, 20);
+            rbCuadruploTodos.Size = new Size(166, 20);
             rbCuadruploTodos.TabIndex = 4;
             rbCuadruploTodos.Text = "Programa Completo";
             rbCuadruploTodos.UseVisualStyleBackColor = true;
@@ -587,9 +593,43 @@ namespace Interfaz_Lexico
             lblResumenCuadruplos.ForeColor = Color.DimGray;
             lblResumenCuadruplos.Location = new Point(6, 528);
             lblResumenCuadruplos.Name = "lblResumenCuadruplos";
-            lblResumenCuadruplos.Size = new Size(245, 19);
+            lblResumenCuadruplos.Size = new Size(203, 20);
             lblResumenCuadruplos.TabIndex = 6;
             lblResumenCuadruplos.Text = "Temporales: 0 | Cuádruplos: 0";
+            // 
+            // tabControl1
+            // 
+            tabControl1.Controls.Add(tabPage1);
+            tabControl1.Controls.Add(tabPage2);
+            tabControl1.Location = new Point(12, 486);
+            tabControl1.Name = "tabControl1";
+            tabControl1.SelectedIndex = 0;
+            tabControl1.Size = new Size(878, 301);
+            tabControl1.TabIndex = 24;
+            // 
+            // tabPage1
+            // 
+            tabPage1.Controls.Add(dgtTablaDeSimbolos);
+            tabPage1.Controls.Add(label4);
+            tabPage1.Location = new Point(4, 29);
+            tabPage1.Name = "tabPage1";
+            tabPage1.Padding = new Padding(3);
+            tabPage1.Size = new Size(870, 268);
+            tabPage1.TabIndex = 0;
+            tabPage1.Text = "tabPage1";
+            tabPage1.UseVisualStyleBackColor = true;
+            // 
+            // tabPage2
+            // 
+            tabPage2.Controls.Add(dgtErrores);
+            tabPage2.Controls.Add(label3);
+            tabPage2.Location = new Point(4, 29);
+            tabPage2.Name = "tabPage2";
+            tabPage2.Padding = new Padding(3);
+            tabPage2.Size = new Size(870, 268);
+            tabPage2.TabIndex = 1;
+            tabPage2.Text = "tabPage2";
+            tabPage2.UseVisualStyleBackColor = true;
             // 
             // Form1
             // 
@@ -597,12 +637,11 @@ namespace Interfaz_Lexico
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.AliceBlue;
             CancelButton = btnCargarPrograma;
-            ClientSize = new Size(1855, 764);
+            ClientSize = new Size(1726, 832);
+            Controls.Add(tabControl1);
             Controls.Add(grpArbolJerarquia);
             Controls.Add(picLinea2);
             Controls.Add(picLineas);
-            Controls.Add(label4);
-            Controls.Add(label3);
             Controls.Add(label2);
             Controls.Add(label1);
             Controls.Add(lblNovaNyxVersion);
@@ -613,8 +652,6 @@ namespace Interfaz_Lexico
             Controls.Add(btnCargarPrograma);
             Controls.Add(btnGuardarPrograma);
             Controls.Add(btnAnalizar);
-            Controls.Add(dgtErrores);
-            Controls.Add(dgtTablaDeSimbolos);
             Controls.Add(richProgramaFuente);
             Controls.Add(richArchivoDeTokens);
             Name = "Form1";
@@ -622,17 +659,22 @@ namespace Interfaz_Lexico
             Load += Form1_Load;
             ((System.ComponentModel.ISupportInitialize)dgtTablaDeSimbolos).EndInit();
             ((System.ComponentModel.ISupportInitialize)dgtErrores).EndInit();
-            ((System.ComponentModel.ISupportInitialize)dgtCuadruplos).EndInit();
             ((System.ComponentModel.ISupportInitialize)PicNovaNyx).EndInit();
             ((System.ComponentModel.ISupportInitialize)picLineas).EndInit();
             ((System.ComponentModel.ISupportInitialize)picLinea2).EndInit();
+            grpArbolJerarquia.ResumeLayout(false);
+            grpArbolJerarquia.PerformLayout();
+            tabAnalisisJerarquia.ResumeLayout(false);
             tabArbol.ResumeLayout(false);
             tabArbol.PerformLayout();
             tabCodigoIntermedio.ResumeLayout(false);
             tabCodigoIntermedio.PerformLayout();
-            tabAnalisisJerarquia.ResumeLayout(false);
-            grpArbolJerarquia.ResumeLayout(false);
-            grpArbolJerarquia.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)dgtCuadruplos).EndInit();
+            tabControl1.ResumeLayout(false);
+            tabPage1.ResumeLayout(false);
+            tabPage1.PerformLayout();
+            tabPage2.ResumeLayout(false);
+            tabPage2.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
 
@@ -689,5 +731,8 @@ namespace Interfaz_Lexico
         private System.Windows.Forms.DataGridViewTextBoxColumn colArg2;
         private System.Windows.Forms.DataGridViewTextBoxColumn colRes;
         private System.Windows.Forms.Label lblResumenCuadruplos;
+        private TabControl tabControl1;
+        private TabPage tabPage1;
+        private TabPage tabPage2;
     }
 }
