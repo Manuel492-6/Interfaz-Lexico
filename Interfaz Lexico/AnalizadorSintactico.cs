@@ -33,7 +33,7 @@ namespace Interfaz_Lexico
 
         private void EmitirCuadruplo(string op, string arg1 = "", string arg2 = "", string res = "")
         {
-            CuadruplosPrograma.Add(new Cuadruplo(contadorCuadruplosGlobal++, op, arg1, arg2, res));
+            // Saltos de control (JMP, JFALSE, LABEL, RECEIVE, RETURN) deshabilitados por solicitud de diseño limpio
         }
 
         private string AgregarCuadruplosDeResultado(ResultadoSemanticoOperacion? resultado)
@@ -45,9 +45,12 @@ namespace Interfaz_Lexico
             {
                 foreach (var c in resultado.Cuadruplos)
                 {
-                    Cuadruplo nuevo = new Cuadruplo(contadorCuadruplosGlobal++, c.Operador, c.Argumento1, c.Argumento2, c.Resultado);
-                    CuadruplosPrograma.Add(nuevo);
-                    ultimoResultado = nuevo.Resultado;
+                    if (string.IsNullOrEmpty(funcionActual))
+                    {
+                        Cuadruplo nuevo = new Cuadruplo(contadorCuadruplosGlobal++, c.Operador, c.Argumento1, c.Argumento2, c.Resultado);
+                        CuadruplosPrograma.Add(nuevo);
+                    }
+                    ultimoResultado = c.Resultado;
                 }
             }
             else if (resultado.ArbolRaiz != null)

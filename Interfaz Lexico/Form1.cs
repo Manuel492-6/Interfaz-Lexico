@@ -19,6 +19,8 @@ namespace Interfaz_Lexico
         private AnalizadorSemanticoJerarquia analizadorSemantico = new AnalizadorSemanticoJerarquia();
         private List<ResultadoSemanticoOperacion> operacionesDetectadas = new List<ResultadoSemanticoOperacion>();
         private List<Cuadruplo> cuadruplosGlobales = new List<Cuadruplo>();
+        private List<Triplo> triplosGlobales = new List<Triplo>();
+        private List<InstruccionP> codigoPGlobal = new List<InstruccionP>();
         private string[,] matrizCompleta;
         private List<string> alfabetoTemporal = new List<string>();
 
@@ -714,21 +716,29 @@ namespace Interfaz_Lexico
                 operacionesDetectadas = analizadorSemantico.ExtraerOperacionesDeCodigoFuente(richProgramaFuente.Text);
             }
 
-            // Generar Cuádruplos Globales consolidados para todo el programa
-            if (sintactico != null && sintactico.CuadruplosPrograma.Count > 0)
-            {
-                cuadruplosGlobales = sintactico.CuadruplosPrograma;
-            }
-            else
-            {
-                cuadruplosGlobales = GeneradorCodigoIntermedio.GenerarCuadruplosPrograma(operacionesDetectadas);
-            }
+            // Generar Cuádruplos, Triplos y Código P Globales consolidados para todo el programa (sin saltos)
+            cuadruplosGlobales = GeneradorCodigoIntermedio.GenerarCuadruplosPrograma(operacionesDetectadas);
+            triplosGlobales = GeneradorCodigoIntermedio.GenerarTriplosPrograma(operacionesDetectadas);
+            codigoPGlobal = GeneradorCodigoIntermedio.GenerarCodigoPPrograma(operacionesDetectadas);
 
             // Cargar visualmente en tvArbolJerarquia
             analizadorSemantico.CargarArbolSincronizado(tvArbolJerarquia, operacionesDetectadas);
 
             // Sincronizar la tabla de símbolos en el DataGridView con los tipos y valores del árbol
             ActualizarTablaDeSimbolos();
+
+            // Poblar tabla comparativa de notaciones del programa
+            dgtNotaciones.Rows.Clear();
+            for (int i = 0; i < operacionesDetectadas.Count; i++)
+            {
+                var op = operacionesDetectadas[i];
+                dgtNotaciones.Rows.Add(
+                    i + 1,
+                    !string.IsNullOrEmpty(op.NotacionInfija) ? op.NotacionInfija : op.ExpresionOriginal,
+                    op.NotacionPrefija,
+                    op.NotacionPostfija
+                );
+            }
 
             // Actualizar ComboBox con las operaciones detectadas
             cboOperacionesCodigo.SelectedIndexChanged -= cboOperacionesCodigo_SelectedIndexChanged;
@@ -756,9 +766,16 @@ namespace Interfaz_Lexico
                 lblEstadoSemantico.Text = "No se detectaron operaciones en el código";
                 lblEstadoSemantico.ForeColor = Color.DimGray;
                 rtbPasosJerarquia.Clear();
+                txtInfija.Clear();
+                txtPrefija.Clear();
                 txtPostfija.Clear();
+                dgtNotaciones.Rows.Clear();
                 dgtCuadruplos.Rows.Clear();
-                lblResumenCuadruplos.Text = "Temporales: 0 | Cuádruplos: 0";
+                dgtTriplos.Rows.Clear();
+                dgtCodigoP.Rows.Clear();
+                rtbCodigoP.Clear();
+                lblResumenCuadruplos.Text = "Temporales: 0 | Cuádruplos: 0 | Triplos: 0";
+                lblResumenCodigoP.Text = "Total Instrucciones P-Code: 0";
             }
         }
 
@@ -847,10 +864,19 @@ namespace Interfaz_Lexico
             lblEstadoSemantico.Text = "Listo: presiona 'Analizar Todo'";
             lblEstadoSemantico.ForeColor = Color.SlateGray;
             rtbPasosJerarquia.Clear();
+            txtInfija.Clear();
+            txtPrefija.Clear();
             txtPostfija.Clear();
+            dgtNotaciones.Rows.Clear();
             dgtCuadruplos.Rows.Clear();
+            dgtTriplos.Rows.Clear();
+            dgtCodigoP.Rows.Clear();
+            rtbCodigoP.Clear();
             cuadruplosGlobales.Clear();
-            lblResumenCuadruplos.Text = "Temporales: 0 | Cuádruplos: 0";
+            triplosGlobales.Clear();
+            codigoPGlobal.Clear();
+            lblResumenCuadruplos.Text = "Temporales: 0 | Cuádruplos: 0 | Triplos: 0";
+            lblResumenCodigoP.Text = "Total Instrucciones P-Code: 0";
         }
 
         // Muestra los pasos de evaluación por jerarquía y el resultado de la operación MostrarPasosOperacion()
@@ -859,8 +885,12 @@ namespace Interfaz_Lexico
             rtbPasosJerarquia.Clear();
             if (op == null) return;
 
-            // Actualizar visualización de Código Intermedio
+            // Actualizar visualización de las 3 Notaciones (Infija, Prefija, Postfija)
+            txtInfija.Text = !string.IsNullOrEmpty(op.NotacionInfija) ? op.NotacionInfija : op.ExpresionOriginal;
+            txtPrefija.Text = !string.IsNullOrEmpty(op.NotacionPrefija) ? op.NotacionPrefija : "(Sin notación)";
             txtPostfija.Text = !string.IsNullOrEmpty(op.NotacionPostfija) ? op.NotacionPostfija : "(Sin notación)";
+
+            // Actualizar visualización de Cuádruplos, Triplos y Código P
             ActualizarGridCuadruplos();
 
             if (op.EsValida)
@@ -872,20 +902,10 @@ namespace Interfaz_Lexico
 
                 System.Text.StringBuilder sb = new System.Text.StringBuilder();
                 sb.AppendLine($"OPERACIÓN: {op.ExpresionOriginal}");
-                if (!string.IsNullOrEmpty(op.NotacionPostfija))
-                {
-                    sb.AppendLine($"NOTACIÓN POSTFIJA (RPN): {op.NotacionPostfija}");
-                }
-                sb.AppendLine("---------------------------------------------");
-                if (op.Cuadruplos.Count > 0)
-                {
-                    sb.AppendLine("CUÁDRUPLOS (C3D):");
-                    foreach (var c in op.Cuadruplos)
-                    {
-                        sb.AppendLine($"  {c.Indice}. {c.ToString()}");
-                    }
-                    sb.AppendLine("---------------------------------------------");
-                }
+                sb.AppendLine($"• INFIJA   : {(!string.IsNullOrEmpty(op.NotacionInfija) ? op.NotacionInfija : op.ExpresionOriginal)}");
+                sb.AppendLine($"• PREFIJA  : {op.NotacionPrefija}");
+                sb.AppendLine($"• POSTFIJA : {op.NotacionPostfija}");
+                sb.AppendLine("------------------------------------------------------------");
                 sb.AppendLine("ORDEN DE EVALUACIÓN SEMÁNTICA POR JERARQUÍA:");
                 foreach (var paso in op.PasosEvaluacion)
                 {
@@ -893,7 +913,7 @@ namespace Interfaz_Lexico
                 }
                 if (!string.IsNullOrEmpty(op.ValorCalculado))
                 {
-                    sb.AppendLine("---------------------------------------------");
+                    sb.AppendLine("------------------------------------------------------------");
                     sb.AppendLine($"VALOR FINAL CALCULADO: {op.ValorCalculado}");
                 }
                 rtbPasosJerarquia.Text = sb.ToString();
@@ -909,7 +929,7 @@ namespace Interfaz_Lexico
                 {
                     sb.AppendLine($"NOTACIÓN POSTFIJA (RPN): {op.NotacionPostfija}");
                 }
-                sb.AppendLine("---------------------------------------------");
+                sb.AppendLine("------------------------------------------------------------");
                 sb.AppendLine("ERRORES SEMÁNTICOS:");
                 foreach (var err in op.ErroresSemanticos)
                 {
@@ -953,32 +973,44 @@ namespace Interfaz_Lexico
             }
         }
 
-        // Actualiza el DataGridView de cuádruplos según el modo seleccionado (operación actual o programa completo)
+        // Actualiza las tablas de Cuádruplos, Triplos y Código P según el modo seleccionado (operación actual o programa completo)
         private void ActualizarGridCuadruplos()
         {
             dgtCuadruplos.Rows.Clear();
-            List<Cuadruplo> listaAMostrar;
+            dgtTriplos.Rows.Clear();
+            dgtCodigoP.Rows.Clear();
+            rtbCodigoP.Clear();
+
+            List<Cuadruplo> listaCuadruplos;
+            List<Triplo> listaTriplos;
+            List<InstruccionP> listaCodigoP;
 
             if (rbCuadruploTodos.Checked)
             {
-                listaAMostrar = cuadruplosGlobales;
+                listaCuadruplos = cuadruplosGlobales;
+                listaTriplos = triplosGlobales;
+                listaCodigoP = codigoPGlobal;
             }
             else
             {
                 int idx = cboOperacionesCodigo.SelectedIndex;
                 if (idx >= 0 && idx < operacionesDetectadas.Count)
                 {
-                    listaAMostrar = operacionesDetectadas[idx].Cuadruplos;
+                    listaCuadruplos = operacionesDetectadas[idx].Cuadruplos;
+                    listaTriplos = operacionesDetectadas[idx].Triplos;
+                    listaCodigoP = operacionesDetectadas[idx].CodigoP;
                 }
                 else
                 {
-                    listaAMostrar = new List<Cuadruplo>();
+                    listaCuadruplos = new List<Cuadruplo>();
+                    listaTriplos = new List<Triplo>();
+                    listaCodigoP = new List<InstruccionP>();
                 }
             }
 
             HashSet<string> temporalesUnicos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            foreach (var c in listaAMostrar)
+            foreach (var c in listaCuadruplos)
             {
                 dgtCuadruplos.Rows.Add(c.Indice, c.Operador, c.Argumento1, c.Argumento2, c.Resultado);
                 if (c.Resultado.StartsWith("T", StringComparison.OrdinalIgnoreCase))
@@ -987,10 +1019,25 @@ namespace Interfaz_Lexico
                 }
             }
 
-            lblResumenCuadruplos.Text = $"Temporales: {temporalesUnicos.Count} | Cuádruplos: {listaAMostrar.Count}";
+            foreach (var t in listaTriplos)
+            {
+                dgtTriplos.Rows.Add(t.Referencia, t.Operador, t.Argumento1, t.Argumento2);
+            }
+
+            System.Text.StringBuilder sbP = new System.Text.StringBuilder();
+            sbP.AppendLine("; === LISTADO DE CÓDIGO P ===");
+            foreach (var p in listaCodigoP)
+            {
+                dgtCodigoP.Rows.Add(p.Indice, p.Instruccion, p.Operando, p.Comentario);
+                sbP.AppendLine($"{p.Indice,2}:  {p.ToString()}");
+            }
+            rtbCodigoP.Text = sbP.ToString();
+
+            lblResumenCuadruplos.Text = $"Temporales: {temporalesUnicos.Count} | Cuádruplos: {listaCuadruplos.Count} | Triplos: {listaTriplos.Count}";
+            lblResumenCodigoP.Text = $"Total Instrucciones P-Code: {listaCodigoP.Count}";
         }
 
-        // Manejador del cambio de modo en los radio buttons de cuádruplos
+        // Manejador del cambio de modo en los radio buttons de código intermedio
         private void rbCuadruploModo_CheckedChanged(object? sender, EventArgs e)
         {
             ActualizarGridCuadruplos();

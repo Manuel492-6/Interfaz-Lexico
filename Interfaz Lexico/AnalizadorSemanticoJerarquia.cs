@@ -23,8 +23,12 @@ namespace Interfaz_Lexico
         public List<string> ErroresSemanticos { get; set; } = new List<string>();
         public string TipoDatoResultante { get; set; } = "desconocido";
         public string? ValorCalculado { get; set; }
+        public string NotacionInfija { get; set; } = "";
+        public string NotacionPrefija { get; set; } = "";
         public string NotacionPostfija { get; set; } = "";
         public List<Cuadruplo> Cuadruplos { get; set; } = new List<Cuadruplo>();
+        public List<Triplo> Triplos { get; set; } = new List<Triplo>();
+        public List<InstruccionP> CodigoP { get; set; } = new List<InstruccionP>();
         public bool EsValida => ErroresSemanticos.Count == 0;
     }
 
@@ -326,11 +330,20 @@ namespace Interfaz_Lexico
                 // Generar los pasos de resolución por jerarquía
                 GenerarPasosJerarquia(raiz);
 
-                // Generar Notación Postfija (RPN) y Cuádruplos (C3D)
+                // Generar Notaciones (Infija, Prefija, Postfija) y Código Intermedio (Cuádruplos, Triplos, Código P)
+                resultado.NotacionInfija = GeneradorCodigoIntermedio.GenerarNotacionInfija(raiz);
+                resultado.NotacionPrefija = GeneradorCodigoIntermedio.GenerarNotacionPrefija(raiz);
                 resultado.NotacionPostfija = GeneradorCodigoIntermedio.GenerarNotacionPostfija(raiz);
+
                 int tempCont = 1;
                 int cuadCont = 1;
                 resultado.Cuadruplos = GeneradorCodigoIntermedio.GenerarCuadruplos(raiz, ref tempCont, ref cuadCont);
+
+                int tripCont = 1;
+                resultado.Triplos = GeneradorCodigoIntermedio.GenerarTriplos(raiz, ref tripCont);
+
+                int pCont = 1;
+                resultado.CodigoP = GeneradorCodigoIntermedio.GenerarCodigoP(raiz, ref pCont);
             }
 
             resultado.ArbolRaiz = raiz;
