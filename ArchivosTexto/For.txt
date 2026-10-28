@@ -1,0 +1,5 @@
+"START ;"
+"FOR FROM idx = 1 UNTIL 10 INTERVAL 1"
+"PRINT idx ;"
+"ENDFOR ;"
+"END ;"

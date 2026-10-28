@@ -1,0 +1,8 @@
+"START ;"
+"edad = 18 ;"
+"IF edad \u003E= 18 THEN"
+"PRINT \u0022Mayor\u0022 ;"
+"ELSE"
+"PRINT \u0022Menor\u0022 ;"
+"ENDIF ;"
+"END "

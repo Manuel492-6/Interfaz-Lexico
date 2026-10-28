@@ -170,6 +170,16 @@ namespace Interfaz_Lexico
                 else if (t.Tipo.StartsWith("SC)")) lex = ")";
                 else if (t.Tipo.StartsWith("RW26") || t.Lexema.Equals("TRUE", StringComparison.OrdinalIgnoreCase)) lex = "TRUE";
                 else if (t.Tipo.StartsWith("RW08") || t.Lexema.Equals("FALSE", StringComparison.OrdinalIgnoreCase)) lex = "FALSE";
+                else if (t.Tipo.StartsWith("LO1") || t.Lexema.Equals("AND", StringComparison.OrdinalIgnoreCase) || t.Lexema == "&&") lex = "AND";
+                else if (t.Tipo.StartsWith("LO2") || t.Lexema.Equals("OR", StringComparison.OrdinalIgnoreCase) || t.Lexema == "||") lex = "OR";
+                else if (t.Tipo.StartsWith("LO3") || t.Lexema.Equals("NOT", StringComparison.OrdinalIgnoreCase) || t.Lexema == "!") lex = "NOT";
+                else if (t.Tipo.StartsWith("RO"))
+                {
+                    if (!string.IsNullOrEmpty(t.Lexema) && (t.Lexema == ">=" || t.Lexema == "<=" || t.Lexema == "==" || t.Lexema == "!=" || t.Lexema == ">" || t.Lexema == "<"))
+                        lex = t.Lexema;
+                    else if (t.Tipo.Length > 2)
+                        lex = t.Tipo.Substring(2);
+                }
 
                 sb.Append(lex).Append(" ");
             }
@@ -336,9 +346,19 @@ namespace Interfaz_Lexico
                     string palabra = entrada.Substring(inicio, i - inicio);
                     if (palabra.Equals("AND", StringComparison.OrdinalIgnoreCase) ||
                         palabra.Equals("OR", StringComparison.OrdinalIgnoreCase) ||
-                        palabra.Equals("NOT", StringComparison.OrdinalIgnoreCase))
+                        palabra.Equals("NOT", StringComparison.OrdinalIgnoreCase) ||
+                        palabra.Equals("LO1", StringComparison.OrdinalIgnoreCase) ||
+                        palabra.Equals("LO2", StringComparison.OrdinalIgnoreCase) ||
+                        palabra.Equals("LO3", StringComparison.OrdinalIgnoreCase))
                     {
-                        list.Add(new TokenSemantico { Lexema = palabra.ToUpper(), Tipo = "OP_LOG", Linea = linea, Posicion = inicio });
+                        string opLogLex = palabra.ToUpper() switch
+                        {
+                            "LO1" => "AND",
+                            "LO2" => "OR",
+                            "LO3" => "NOT",
+                            _ => palabra.ToUpper()
+                        };
+                        list.Add(new TokenSemantico { Lexema = opLogLex, Tipo = "OP_LOG", Linea = linea, Posicion = inicio });
                     }
                     else if (palabra.Equals("TRUE", StringComparison.OrdinalIgnoreCase) ||
                              palabra.Equals("FALSE", StringComparison.OrdinalIgnoreCase))
@@ -417,14 +437,15 @@ namespace Interfaz_Lexico
         {
             NodoJerarquia izquierdo = ParsearRelacional();
 
-            while (pos < tokens.Count && (tokens[pos].Lexema == "||" || tokens[pos].Lexema == "OR" ||
-                                          tokens[pos].Lexema == "&&" || tokens[pos].Lexema == "AND"))
+            while (pos < tokens.Count && (tokens[pos].Lexema == "||" || tokens[pos].Lexema.Equals("OR", StringComparison.OrdinalIgnoreCase) ||
+                                          tokens[pos].Lexema == "&&" || tokens[pos].Lexema.Equals("AND", StringComparison.OrdinalIgnoreCase)))
             {
                 TokenSemantico opTok = tokens[pos];
                 pos++;
                 NodoJerarquia derecho = ParsearRelacional();
 
-                NodoJerarquia nuevo = new NodoJerarquia(opTok.Lexema, "Operador", 6, "Nivel 6: Lógico (" + opTok.Lexema + ")", "bool")
+                string opLex = opTok.Lexema.ToUpper();
+                NodoJerarquia nuevo = new NodoJerarquia(opLex, "Operador", 6, "Nivel 6: Lógico (" + opLex + ")", "bool")
                 {
                     Izquierdo = izquierdo,
                     Derecho = derecho
@@ -1183,6 +1204,30 @@ namespace Interfaz_Lexico
                     {
                         var resWhile = AnalizarExpresion(cond, i + 1);
                         lista.Add(resWhile);
+                    }
+                    continue;
+                }
+
+                // 4b. DO WHILE Condicion
+                if (System.Text.RegularExpressions.Regex.IsMatch(lineaSinPuntoComa, @"^\s*DO\s+WHILE\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+                {
+                    string cond = System.Text.RegularExpressions.Regex.Replace(lineaSinPuntoComa, @"^\s*DO\s+WHILE\b", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase).Trim();
+                    if (!string.IsNullOrEmpty(cond))
+                    {
+                        var resDoWhile = AnalizarExpresion(cond, i + 1);
+                        lista.Add(resDoWhile);
+                    }
+                    continue;
+                }
+
+                // 4c. UNTIL Condicion (en EXECUTE)
+                if (System.Text.RegularExpressions.Regex.IsMatch(lineaSinPuntoComa, @"^\s*UNTIL\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+                {
+                    string cond = System.Text.RegularExpressions.Regex.Replace(lineaSinPuntoComa, @"^\s*UNTIL\b", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase).Trim();
+                    if (!string.IsNullOrEmpty(cond))
+                    {
+                        var resUntil = AnalizarExpresion(cond, i + 1);
+                        lista.Add(resUntil);
                     }
                     continue;
                 }

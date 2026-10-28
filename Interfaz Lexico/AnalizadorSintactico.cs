@@ -441,26 +441,88 @@ namespace Interfaz_Lexico
             }
         }
 
+        // Comprueba si un token representa un operador lógico binario (AND, OR, &&, ||, LO1, LO2)
+        private bool EsOperadorLogicoBinario(TokenSintactico tok)
+        {
+            if (tok == null) return false;
+            string t = tok.Tipo;
+            string l = tok.Lexema;
+            return t.StartsWith("LO1") || t.StartsWith("LO2") || t.StartsWith("LOP") || t.StartsWith("OLOG") ||
+                   l.Equals("AND", StringComparison.OrdinalIgnoreCase) ||
+                   l.Equals("OR", StringComparison.OrdinalIgnoreCase) ||
+                   l == "&&" || l == "||" ||
+                   (t.StartsWith("LO") && !EsOperadorLogicoUnario(tok));
+        }
+
+        // Comprueba si un token representa un operador lógico unario (NOT, !, LO3)
+        private bool EsOperadorLogicoUnario(TokenSintactico tok)
+        {
+            if (tok == null) return false;
+            string t = tok.Tipo;
+            string l = tok.Lexema;
+            return t.StartsWith("LO3") || t.StartsWith("LONOT") ||
+                   l.Equals("NOT", StringComparison.OrdinalIgnoreCase) ||
+                   l == "!" ||
+                   (t == "LO2" && l.Equals("NOT", StringComparison.OrdinalIgnoreCase));
+        }
+
+        // Comprueba si un token representa un operador relacional (>, <, ==, !=, >=, <=, RO, REO)
+        private bool EsOperadorRelacional(TokenSintactico tok)
+        {
+            if (tok == null) return false;
+            string t = tok.Tipo;
+            string l = tok.Lexema;
+            return t.StartsWith("RO") || t.StartsWith("REO") ||
+                   l == ">" || l == "<" || l == "==" || l == "!=" || l == ">=" || l == "<=";
+        }
+
         // Analiza y valida una condición lógica o relacional compuesta ParsearCondicion()
         private void ParsearCondicion()
         {
             int inicioCond = pos;
+            ParsearCondicionLogica();
+            int finCond = pos;
+
+            if (finCond > inicioCond)
+            {
+                VerificarSemanticaOperacion(tokens.GetRange(inicioCond, finCond - inicioCond));
+            }
+        }
+
+        // Parsea condiciones encadenadas por operadores lógicos opcionales (AND, OR)
+        private void ParsearCondicionLogica()
+        {
+            ParsearSubCondicion();
+
+            // Los operadores lógicos (AND, OR) son OPCIONALES: si están presentes, encadenan subcondiciones
+            while (pos < tokens.Count && EsOperadorLogicoBinario(tokens[pos]))
+            {
+                pos++; // Consumir operador lógico AND / OR
+                ParsearSubCondicion();
+            }
+        }
+
+        // Parsea una subcondición unitaria (relacional, entre paréntesis, con negación NOT o valor booleano)
+        private void ParsearSubCondicion()
+        {
+            int inicioSub = pos;
             bool tieneNot = false;
 
-            // Soporte para operador lógico unario NOT (LO2)
-            if (pos < tokens.Count && (tokens[pos].Tipo.StartsWith("LO2") || tokens[pos].Lexema.Equals("NOT", StringComparison.OrdinalIgnoreCase)))
+            // Soporte para operador lógico unario NOT
+            if (pos < tokens.Count && EsOperadorLogicoUnario(tokens[pos]))
             {
                 pos++;
                 tieneNot = true;
             }
 
-            // Soporte para condición agrupada entre paréntesis (ej. (a > b))
+            // Soporte para subcondición agrupada entre paréntesis (ej. (nota >= 70) o (a > b AND c < d))
             bool tieneParentesis = false;
             if (pos < tokens.Count && (tokens[pos].Tipo.StartsWith("SC(") || tokens[pos].Lexema == "("))
             {
                 pos++;
                 tieneParentesis = true;
-                ParsearCondicion();
+                ParsearCondicionLogica();
+
                 if (!Match("SC)") && (pos < tokens.Count && tokens[pos].Lexema != ")"))
                 {
                     ReportarError("Se esperaba cierre de paréntesis ')' en la condición.");
@@ -476,48 +538,54 @@ namespace Interfaz_Lexico
             }
 
             bool tieneRelacional = false;
-            if (pos < tokens.Count && (tokens[pos].Tipo.StartsWith("RO") || tokens[pos].Tipo.StartsWith("REO")))
+            if (pos < tokens.Count && EsOperadorRelacional(tokens[pos]))
             {
                 tieneRelacional = true;
                 pos++;
                 ParsearExpresion();
             }
 
-            bool tieneLogico = false;
-            if (pos < tokens.Count && (tokens[pos].Tipo.StartsWith("LO") || tokens[pos].Tipo.StartsWith("LOP") || tokens[pos].Tipo.StartsWith("OLOG")))
+            // Si vino un grupo con paréntesis y luego un operador relacional (ej. '(a + b) > 10')
+            if (tieneParentesis && !tieneRelacional && pos < tokens.Count && EsOperadorRelacional(tokens[pos]))
             {
-                tieneLogico = true;
+                tieneRelacional = true;
                 pos++;
-                ParsearCondicion();
+                ParsearExpresion();
             }
 
-            bool esBooleanoDirecto = (inicioCond < pos && tokens.GetRange(inicioCond, pos - inicioCond).Any(tok =>
+            bool esBooleanoDirecto = (inicioSub < pos && tokens.GetRange(inicioSub, pos - inicioSub).Any(tok =>
                 tok.Tipo.StartsWith("RW26") || tok.Tipo.StartsWith("RW08") ||
                 tok.Lexema.Equals("TRUE", StringComparison.OrdinalIgnoreCase) ||
                 tok.Lexema.Equals("FALSE", StringComparison.OrdinalIgnoreCase) ||
                 semantico.ObtenerTipo(tok.Lexema) == "bool"));
 
-            if (!tieneRelacional && !tieneLogico && !tieneNot && !tieneParentesis && !esBooleanoDirecto)
+            if (!tieneRelacional && !tieneNot && !tieneParentesis && !esBooleanoDirecto)
             {
                 ReportarError("Se esperaba un operador relacional (>, <, ==, !=, >=, <=) o lógico en la condición.");
             }
-
-            int finCond = pos;
-            if (finCond > inicioCond)
-            {
-                VerificarSemanticaOperacion(tokens.GetRange(inicioCond, finCond - inicioCond));
-            }
         }
 
-        // Analiza argumentos mixtos que pueden ser condiciones o expresiones (ej. ARG6 en CASE / NONE)
+        // Analiza argumentos mixtos que pueden ser condiciones o expresiones (ej. ARG6 en CASE / NONE / UNTIL)
         private void ParsearCondicionOExpresion()
         {
             int inicio = pos;
-            ParsearExpresion();
-            if (pos < tokens.Count && (tokens[pos].Tipo.StartsWith("RO") || tokens[pos].Tipo.StartsWith("REO")))
+            if (pos < tokens.Count && (tokens[pos].Tipo.StartsWith("SC(") || tokens[pos].Lexema == "(" || EsOperadorLogicoUnario(tokens[pos])))
             {
-                pos++;
+                ParsearCondicionLogica();
+            }
+            else
+            {
                 ParsearExpresion();
+                if (pos < tokens.Count && EsOperadorRelacional(tokens[pos]))
+                {
+                    pos++;
+                    ParsearExpresion();
+                }
+                while (pos < tokens.Count && EsOperadorLogicoBinario(tokens[pos]))
+                {
+                    pos++;
+                    ParsearSubCondicion();
+                }
             }
             int fin = pos;
             if (fin > inicio)
@@ -566,8 +634,8 @@ namespace Interfaz_Lexico
         private void ParsearFactor()
         {
             if (pos >= tokens.Count) return;
-            // Soporte para operador lógico unario NOT (LO2, NOT, !)
-            if (tokens[pos].Tipo.StartsWith("LO2") || tokens[pos].Lexema.Equals("NOT", StringComparison.OrdinalIgnoreCase) || tokens[pos].Lexema == "!")
+            // Soporte para operador lógico unario NOT (LO3, NOT, !)
+            if (EsOperadorLogicoUnario(tokens[pos]))
             {
                 pos++;
             }

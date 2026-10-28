@@ -1,0 +1,7 @@
+"START ;"
+"contador = 1 ;"
+"WHILE contador \u003C= 5"
+"PRINT contador ;"
+"contador = contador \u002B 1 ;"
+"ENDWHILE ;"
+"END ;"
