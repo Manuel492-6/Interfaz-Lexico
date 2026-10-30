@@ -72,6 +72,10 @@ namespace Interfaz_Lexico
                     case "Constante":
                         textoNodo = $"🔢 [Operando] Constante: {Lexema} (Tipo: {TipoDato})";
                         break;
+                    case "Funcion":
+                        string extraFunc = !string.IsNullOrEmpty(ValorCalculado) ? $" -> Retorno: {ValorCalculado}" : "";
+                        textoNodo = $"💎 [Función] {Lexema}() (Tipo: {TipoDato}){extraFunc}";
+                        break;
                     default:
                         textoNodo = $"🔹 {Lexema} ({TipoNodo})";
                         break;
@@ -91,6 +95,10 @@ namespace Interfaz_Lexico
             else if (TipoNodo == "Asignacion")
             {
                 treeNode.ForeColor = Color.Navy;
+            }
+            else if (TipoNodo == "Funcion")
+            {
+                treeNode.ForeColor = Color.DarkCyan;
             }
             else if (TipoNodo == "Operador")
             {
